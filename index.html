@@ -65,6 +65,11 @@ main{max-width:1100px;margin:auto;padding:12px max(5vw,16px) 80px}
 .tabs button.on{background:var(--ink);color:var(--bg)}
 .tabs b{display:inline-block;min-width:1.6em;margin-left:4px;padding:0 6px;border-radius:99px;background:var(--red);color:#fff;font-size:12px}
 .shelf span.u{opacity:.3}
+.shelf span.r{opacity:.65;box-shadow:inset 0 -9px 0 rgba(255,255,255,.75)}
+.rdw{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rdw input{width:84px}.rdw span{color:var(--mute);font-size:14px}
+.pg{display:flex;align-items:center;gap:6px;font-size:14px;flex-wrap:wrap}
+.pg input{width:76px;min-height:40px;padding:6px 8px}
+.bm{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--gap);color:#151412;white-space:nowrap}
 .tag.unr{background:var(--ink);color:var(--bg)}
 .ulist{display:grid;gap:8px;margin-top:16px}
 .urow{display:flex;gap:12px;align-items:center;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px;cursor:pointer}
@@ -180,9 +185,10 @@ textarea{width:100%;min-height:160px;font-family:ui-monospace,monospace;font-siz
     <div class="f"><span class="lbl">評価</span><div class="rate" id="iRate"></div></div>
     <div class="f"><label for="iLatest">既刊（最新巻）</label><input id="iLatest" type="number" min="0" inputmode="numeric" placeholder="例: 14"></div>
   </div>
-  <div class="row2">
-    <div class="f"><label for="iRead">何巻まで読んだ</label><input id="iRead" type="number" min="0" inputmode="numeric" placeholder="まだなら空のまま"></div>
-    <div class="f"><span class="lbl">&nbsp;</span><button type="button" class="btn ghost" id="readAll">持ってる巻は全部読んだ</button></div>
+  <div class="f"><span class="lbl">どこまで読んだ</span>
+    <div class="rdw"><input id="iRead" type="number" min="0" inputmode="numeric" aria-label="何巻"><span>巻の</span><input id="iPage" type="number" min="0" inputmode="numeric" aria-label="何ページ" placeholder="最後"><span>ページまで</span></div>
+    <p class="hint">巻を読み終えたならページは空のまま。読みかけならページを入れると「しおり」になります。</p>
+    <button type="button" class="btn ghost" id="readAll">持ってる巻は全部読んだ</button>
   </div>
   <div class="f"><span class="lbl">購入記録（アプリごと・巻の範囲）</span>
     <div id="iPur"></div>
@@ -227,7 +233,7 @@ const col=a=>{if(!a)return'#9a948a';for(const[r,c]of COLS)if(r.test(a))return c;
 const volApp=b=>{const m=new Map();for(const p of b.purchases||[])for(let v=+p.from;v<=(+p.to||+p.from)&&v<2000;v++)m.set(v,p.app||'');return m};
 const runs=b=>{const m=volApp(b),r=[];for(const v of [...m.keys()].sort((x,y)=>x-y)){const a=m.get(v),l=r.at(-1);if(l&&l.app===a&&l.to===v-1)l.to=v;else r.push({app:a,from:v,to:v})}return r};
 const SAMPLE=[
- {title:'星屑ベーカリー',yomi:'ほしくずべーかりー',author:'サンプル作者A',rating:5,latest:17,read:8,status:'連載中',purchases:[{app:'ピッコマ',from:1,to:10},{app:'ブックウォーカー',from:11,to:15}],memo:'これはサンプルです'},
+ {title:'星屑ベーカリー',yomi:'ほしくずべーかりー',author:'サンプル作者A',rating:5,latest:17,read:9,page:32,status:'連載中',purchases:[{app:'ピッコマ',from:1,to:10},{app:'ブックウォーカー',from:11,to:15}],memo:'これはサンプルです'},
  {title:'鋼の羅針盤',yomi:'はがねのらしんばん',author:'サンプル作者B',rating:4,latest:9,read:9,status:'完結',purchases:[{app:'DMMブックス',from:1,to:3},{app:'アメーバマンガ',from:5,to:9}],memo:''},
  {title:'あおぞら食堂',yomi:'あおぞらしょくどう',author:'サンプル作者C',rating:3,latest:6,read:2,status:'連載中',purchases:[{app:'紙の本',from:1,to:6}],memo:''}
 ].map((b,i)=>({...b,id:'s'+i,updated:Date.now()-i*1e6}));
@@ -243,7 +249,7 @@ const ROWS=[['あ','ぁあぃいぅうぇえぉおゔ'],['か','ゕかきくけ�
 const GROUPS=[...ROWS.map(r=>r[0]),'英数','他'];
 const gyou=k=>{const c=k.normalize('NFD')[0]||'';for(const[g,s]of ROWS)if(s.includes(c))return g;return /[a-z0-9]/.test(c)?'英数':'他'};
 const owned=b=>{const s=new Set();for(const p of b.purchases||[]){const a=+p.from||0,z=+p.to||a;for(let v=Math.max(1,a);v<=z&&v<2000;v++)s.add(v)}return s};
-const info=b=>{const s=owned(b),max=s.size?Math.max(...s):0,gaps=[];for(let v=1;v<max;v++)if(!s.has(v))gaps.push(v);const nw=Math.max(0,(+b.latest||0)-max),rd=+b.read||0,un=[...s].filter(v=>v>rd).sort((x,y)=>x-y);return{s,max,gaps,nw,rd,un}};
+const info=b=>{const s=owned(b),max=s.size?Math.max(...s):0,gaps=[];for(let v=1;v<max;v++)if(!s.has(v))gaps.push(v);const nw=Math.max(0,(+b.latest||0)-max),pg=+b.page||0,rv=+b.read||0,rd=pg&&rv?rv-1:rv,un=[...s].filter(v=>v>rd).sort((x,y)=>x-y);return{s,max,gaps,nw,rd,un,pg,rv}};
 const ranges=s=>{const a=[...s].sort((x,y)=>x-y),r=[];for(const v of a){const l=r[r.length-1];if(l&&v===l[1]+1)l[1]=v;else r.push([v,v])}return r.map(([x,y])=>x===y?x:x+'–'+y).join(', ')};
 const hue=t=>{let h=0;for(const c of t)h=(h*31+c.charCodeAt(0))%360;return h};
 const stars=n=>'★'.repeat(n)+'<i>'+'★'.repeat(5-n)+'</i>';
@@ -252,9 +258,9 @@ const allApps=()=>[...new Set([...books.flatMap(b=>(b.purchases||[]).map(p=>p.ap
 const okCover=c=>typeof c==='string'&&(/^https:\/\/(books\.google\.com|books\.googleusercontent\.com|ndlsearch\.ndl\.go\.jp)\/[^\s"'<>]*$/.test(c));
 const coverHTML=b=>`<div class="cover" style="--h:${hue(b.title||'')}">${okCover(b.cover)?`<img src="${esc(b.cover)}" alt="${esc(b.title)}の表紙" referrerpolicy="no-referrer" onerror="this.remove()">`:`<span>${esc((b.title||'？').slice(0,9))}</span>`}</div>`;
 function card(b){
-  const{s,max,gaps,nw,rd,un}=info(b),n=Math.max(max,+b.latest||0);
+  const{s,max,gaps,nw,rd,un,pg,rv}=info(b),n=Math.max(max,+b.latest||0);
   const va=volApp(b),rs=runs(b);let shelf='';
-  if(n<=60){let h='';for(let v=1;v<=n;v++)h+=s.has(v)?`<span class="${v>rd?'u':''}" style="background:${col(va.get(v))}" title="${v}巻 ${esc(va.get(v))}${v>rd?'（未読）':''}"></span>`:`<span class="${v<max?'g':'n'}" title="${v}巻"></span>`;shelf=`<div class="shelf" aria-hidden="true">${h||'<span class="n"></span>'}</div>`}
+  if(n<=60){let h='';for(let v=1;v<=n;v++)h+=s.has(v)?`<span class="${pg&&v===rv?'r':v>rd?'u':''}" style="background:${col(va.get(v))}" title="${v}巻 ${esc(va.get(v))}${pg&&v===rv?`（${pg}ページまで）`:v>rd?'（未読）':''}"></span>`:`<span class="${v<max?'g':'n'}" title="${v}巻"></span>`;shelf=`<div class="shelf" aria-hidden="true">${h||'<span class="n"></span>'}</div>`}
   else shelf=`<div class="shelf big" aria-hidden="true">${rs.map(r=>`<i style="left:${((r.from-1)/n*100).toFixed(2)}%;width:${((r.to-r.from+1)/n*100).toFixed(2)}%;background:${col(r.app)}"></i>`).join('')}</div>`;
   const chips=rs.length?`<div class="buys">${rs.map((r,i)=>`<div class="buy"><i style="background:${col(r.app)}"></i><b>${r.from===r.to?r.from:r.from+'〜'+r.to}巻</b>${esc(r.app||'アプリ未設定')}</div>`).join('')}</div>`:'';
   return `<article class="card" data-id="${esc(b.id)}" tabindex="0">
@@ -266,7 +272,7 @@ function card(b){
     ${shelf}
     <div class="line">所持 <b>${s.size}</b>冊${s.size?`（${esc(ranges(s))}巻）`:''}${b.latest?` / 既刊${+b.latest}巻`:''}
      ${nw?`<span class="tag new">新刊${nw}冊</span>`:''}${gaps.length?`<span class="tag gap">抜け ${esc(ranges(new Set(gaps)))}巻</span>`:''}${b.status==='完結'&&!nw&&!gaps.length&&s.size?'<span class="tag done">コンプ</span>':''}</div>
-    ${s.size?`<div class="line">読んだ：${rd?`<b>${Math.min(rd,max)}</b>巻まで`:'まだ'}${un.length?`<span class="tag unr">未読${un.length}冊</span>`:'<span class="tag done">全部読んだ</span>'}</div>`:''}
+    ${s.size?`<div class="line">読んだ：${rd?`<b>${Math.min(rd,max)}</b>巻まで`:pg?'':'まだ'}${pg&&rv?` <span class="bm">${rv}巻 ${pg}ページ</span>`:''}${un.length?`<span class="tag unr">未読${un.length}冊</span>`:'<span class="tag done">全部読んだ</span>'}</div>`:''}
     ${chips}
     ${b.memo?`<div class="meta">${esc(b.memo)}</div>`:''}
    </div></article>`;
@@ -274,16 +280,17 @@ function card(b){
 
 let view='shelf';
 function urow(b){
-  const{un}=info(b),va=volApp(b),nx=un[0],app=va.get(nx)||'';
+  const{un,pg,rv}=info(b),va=volApp(b),nx=un[0],app=va.get(nx)||'';
   return `<article class="urow" data-id="${esc(b.id)}" tabindex="0">${coverHTML(b)}
    <div class="ui"><h3>${esc(b.title)}</h3>
     <div class="line">未読 <b>${un.length}</b>冊（${esc(ranges(new Set(un)))}巻）</div>
-    <div class="nx">次は <b>${nx}巻</b><i style="background:${col(app)}"></i>${esc(app||'アプリ未設定')}</div></div>
+    <div class="nx">${pg&&rv===nx?`<span class="bm">読みかけ ${nx}巻 ${pg}ページ</span>`:`次は <b>${nx}巻</b>`}<i style="background:${col(app)}"></i>${esc(app||'アプリ未設定')}</div>
+    <label class="pg">${nx}巻の<input type="number" min="0" inputmode="numeric" data-pg="${esc(b.id)}" value="${pg&&rv===nx?pg:''}" placeholder="—">ページまで</label></div>
    <div class="ub"><button data-r1="${esc(b.id)}">${nx}巻を読んだ</button><button data-ra="${esc(b.id)}">全部読んだ</button></div></article>`;
 }
 function markRead(id,all){
   const b=books.find(x=>x.id===id);if(!b)return;const prev=before(),{un,max}=info(b);if(!un.length)return;
-  b.read=all?max:un[0];b.updated=Date.now();
+  b.read=all?max:un[0];b.page='';b.updated=Date.now();
   commit(prev,all?`「${b.title}」を全部読んだ`:`「${b.title}」${un[0]}巻を読んだ`);
 }
 $('#tabs').onclick=e=>{const t=e.target.closest('[data-v]');if(!t)return;view=t.dataset.v;for(const x of $('#tabs').children)x.classList.toggle('on',x===t);render();window.scrollTo(0,0)};
@@ -352,7 +359,7 @@ function openEd(id){
   editing=id?books.find(b=>b.id===id):null;const b=editing||{};
   $('#fT').textContent=editing?'作品を編集':'作品を追加';
   $('#iTitle').value=b.title||'';$('#iYomi').value=b.yomi||'';$('#iAuthor').value=b.author||'';
-  $('#iStatus').value=b.status||'連載中';$('#iLatest').value=b.latest||'';$('#iRead').value=b.read||'';$('#iMemo').value=b.memo||'';
+  $('#iStatus').value=b.status||'連載中';$('#iLatest').value=b.latest||'';$('#iRead').value=b.read||'';$('#iPage').value=b.page||'';$('#iMemo').value=b.memo||'';
   rate=b.rating||0;tmp=(b.purchases||[]).map(p=>({...p}));if(!tmp.length)tmp=[{app:'',from:1,to:''}];
   cover=okCover(b.cover)?b.cover:'';drawCover();drawCands([]);seq++;
   $('#cvHint').textContent=blocked()?NOTE:'新しく追加するときは、タイトルを入れると自動で探します。';
@@ -413,13 +420,13 @@ $('#dup').onclick=e=>{if(e.target.id==='dupOpen'){const d=findDup($('#iTitle').v
 $('#iTitle').addEventListener('input',showDup);
 $('#iTitle').oninput=e=>{const t=e.target.value;if(/^[ぁ-ヿー\s・ー]+$/.test(t)&&!editing)$('#iYomi').value=hira(t);if(!cover)drawCover()};
 $('#cancel').onclick=closeEd;
-$('#readAll').onclick=()=>{const m=Math.max(0,...tmp.map(p=>Math.max(+p.to||0,+p.from||0)));$('#iRead').value=m||''};
+$('#readAll').onclick=()=>{const m=Math.max(0,...tmp.map(p=>Math.max(+p.to||0,+p.from||0)));$('#iRead').value=m||'';$('#iPage').value=''};
 $('#ov').onclick=e=>{if(e.target.id==='ov')closeEd()};
 $('#form').onsubmit=e=>{
   e.preventDefault();const prev=before();
   const pur=tmp.filter(p=>+p.from>0).map(p=>({app:(p.app||'').trim(),from:+p.from,to:Math.max(+p.to||+p.from,+p.from)}));
   const d={title:$('#iTitle').value.trim(),yomi:$('#iYomi').value.trim(),author:$('#iAuthor').value.trim(),status:$('#iStatus').value,
-    latest:+$('#iLatest').value||'',read:+$('#iRead').value||0,memo:$('#iMemo').value.trim(),rating:rate,cover,purchases:pur,updated:Date.now()};
+    latest:+$('#iLatest').value||'',read:+$('#iRead').value||0,page:+$('#iRead').value?(+$('#iPage').value||''):'',memo:$('#iMemo').value.trim(),rating:rate,cover,purchases:pur,updated:Date.now()};
   if(!d.title)return;
   if(showDup()){$('#iTitle').focus();return}
   if(editing)Object.assign(editing,d);else books.push({id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...d});
@@ -431,7 +438,11 @@ $('#del').onclick=()=>{
 };
 
 // list events
-$('#list').onclick=e=>{const r1=e.target.closest('[data-r1],[data-ra]');if(r1){markRead(r1.dataset.r1||r1.dataset.ra,!!r1.dataset.ra);return}const u=e.target.closest('.urow');if(u){openEd(u.dataset.id);return}const p=e.target.closest('[data-plus]');if(p){e.stopPropagation();plusOne(p.dataset.plus);return}const c=e.target.closest('.card');if(c)openEd(c.dataset.id)};
+$('#list').addEventListener('change',e=>{const id=e.target.dataset.pg;if(!id)return;
+  const b=books.find(x=>x.id===id);if(!b)return;const prev=before(),{un,rd}=info(b),nx=un[0],p=+e.target.value||0;
+  if(p>0){b.read=nx;b.page=p}else{b.read=rd;b.page=''}b.updated=Date.now();
+  commit(prev,p>0?`「${b.title}」${nx}巻 ${p}ページにしおり`:'しおりを外しました')});
+$('#list').onclick=e=>{if(e.target.closest('.pg'))return;const r1=e.target.closest('[data-r1],[data-ra]');if(r1){markRead(r1.dataset.r1||r1.dataset.ra,!!r1.dataset.ra);return}const u=e.target.closest('.urow');if(u){openEd(u.dataset.id);return}const p=e.target.closest('[data-plus]');if(p){e.stopPropagation();plusOne(p.dataset.plus);return}const c=e.target.closest('.card');if(c)openEd(c.dataset.id)};
 $('#list').onkeydown=e=>{if(e.key==='Enter'&&(e.target.classList.contains('card')||e.target.classList.contains('urow')))openEd(e.target.dataset.id)};
 $('#idx').onclick=e=>{const g=e.target.dataset.g;if(g)document.getElementById('g-'+g)?.scrollIntoView({behavior:'smooth'})};
 ['#q','#fApp','#fFlag','#sort'].forEach(s=>$(s).addEventListener('input',render));
@@ -460,7 +471,7 @@ $('#bAuto').onclick=async()=>{
 $('#bLoad').onclick=()=>{
   try{const d=JSON.parse($('#bTxt').value);if(!Array.isArray(d))throw 0;const prev=before();
     books=d.filter(b=>b&&b.title).map((b,i)=>({id:String(b.id||'m'+i+Date.now()),title:String(b.title),yomi:String(b.yomi||''),author:String(b.author||''),status:b.status==='完結'?'完結':'連載中',
-      latest:+b.latest||'',read:+b.read||0,rating:Math.min(5,Math.max(0,+b.rating||0)),memo:String(b.memo||''),cover:okCover(b.cover)?b.cover:'',updated:+b.updated||Date.now(),
+      latest:+b.latest||'',read:+b.read||0,page:+b.page||'',rating:Math.min(5,Math.max(0,+b.rating||0)),memo:String(b.memo||''),cover:okCover(b.cover)?b.cover:'',updated:+b.updated||Date.now(),
       purchases:(Array.isArray(b.purchases)?b.purchases:[]).map(p=>({app:String(p.app||''),from:+p.from||1,to:+p.to||+p.from||1}))}));
     $('#ovB').classList.remove('on');commit(prev,`${books.length}作品を読み込みました`)}
   catch(e){toast('読み込めませんでした。内容を確認してください')}
