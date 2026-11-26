@@ -60,6 +60,10 @@ main{max-width:1100px;margin:auto;padding:12px max(5vw,16px) 80px}
 .cvf .cover{width:64px;height:90px;border-radius:6px}
 .cvf .cover span{font-size:12px}
 .pr select{padding:8px}
+.dup{display:none;background:color-mix(in srgb,var(--red) 12%,var(--card));border:1.5px solid var(--red);border-radius:10px;padding:8px 12px;font-size:14px}
+.dup.on{display:block}
+.dup button{margin-top:6px;min-height:40px;padding:6px 12px;border-radius:8px;border:1.5px solid var(--red);background:var(--card);color:var(--red);font-weight:700}
+#iTitle.ng{border-color:var(--red)}
 .cands{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px}
 .cands:empty{display:none}
 .cands button{flex:none;width:60px;height:86px;padding:0;border:2px solid var(--line);border-radius:6px;overflow:hidden;background:var(--soft)}
@@ -136,7 +140,8 @@ textarea{width:100%;min-height:160px;font-family:ui-monospace,monospace;font-siz
 
 <div class="ov" id="ov"><form class="panel" id="form" autocomplete="off">
   <h2 id="fT">作品を追加</h2>
-  <div class="f"><label for="iTitle">タイトル</label><input id="iTitle" required></div>
+  <div class="f"><label for="iTitle">タイトル</label><input id="iTitle" required aria-describedby="dup">
+    <div class="dup" id="dup" role="alert"></div></div>
   <div class="f"><label for="iYomi">よみがな（あいうえお順に使います）</label><input id="iYomi" placeholder="ひらがな・カタカナで"></div>
   <div class="f"><span class="lbl">表紙</span>
     <div class="cvf"><div class="cover" id="cvPrev"></div>
@@ -307,7 +312,7 @@ function openEd(id){
   cover=okCover(b.cover)?b.cover:'';drawCover();drawCands([]);seq++;
   $('#cvHint').textContent=blocked()?NOTE:'新しく追加するときは、タイトルを入れると自動で探します。';
   delArmed=false;$('#del').textContent='削除';$('#del').style.display=editing?'':'none';
-  drawRate();drawPur();$('#ov').classList.add('on');setTimeout(()=>$('#iTitle').focus(),50);
+  drawRate();drawPur();showDup();$('#ov').classList.add('on');setTimeout(()=>$('#iTitle').focus(),50);
 }
 const closeEd=()=>$('#ov').classList.remove('on');
 $('#iRate').onclick=e=>{const r=+e.target.dataset.r;if(r){rate=rate===r?0:r;drawRate()}};
@@ -348,10 +353,19 @@ async function searchCover(auto){
 }
 $('#cvFind').onclick=()=>searchCover(false);
 $('#cvCands').onclick=e=>{const b=e.target.closest('[data-u]');if(!b)return;cover=b.dataset.u;drawCover();for(const x of $('#cvCands').children)x.classList.toggle('on',x===b)};
-$('#iTitle').addEventListener('change',()=>{if(!editing&&!cover)searchCover(true)});
+$('#iTitle').addEventListener('change',()=>{if(!editing&&!cover&&!findDup($('#iTitle').value))searchCover(true)});
 $('#cvDel').onclick=()=>{cover='';drawCover();drawCands([])};
 $('#iPur').onclick=e=>{if(e.target.dataset.x!==undefined){tmp.splice(+e.target.dataset.x,1);drawPur()}};
 $('#addPur').onclick=()=>{const m=Math.max(0,...tmp.map(p=>+p.to||+p.from||0));tmp.push({app:tmp.at(-1)?.app||'',from:m+1,to:''});drawPur()};
+// 重複チェック：全角半角・カタカナひらがな・大文字小文字・空白や記号の違いは同じ作品とみなす
+const norm=s=>hira(String(s||'').normalize('NFKC')).toLowerCase().replace(/[\s・\-~〜!?！？.,、。:：'"「」『』（）()\[\]【】☆★♪]/g,'');
+const findDup=t=>{const n=norm(t);return n?books.find(b=>b!==editing&&norm(b.title)===n):null};
+function showDup(){const t=$('#iTitle').value,d=findDup(t);
+  $('#dup').classList.toggle('on',!!d);$('#iTitle').classList.toggle('ng',!!d);
+  $('#dup').innerHTML=d?`「${esc(d.title)}」はもう登録されています。<br><button type="button" id="dupOpen">登録済みの「${esc(d.title)}」を開く</button>`:'';
+  return d}
+$('#dup').onclick=e=>{if(e.target.id==='dupOpen'){const d=findDup($('#iTitle').value);if(d)openEd(d.id)}};
+$('#iTitle').addEventListener('input',showDup);
 $('#iTitle').oninput=e=>{const t=e.target.value;if(/^[ぁ-ヿー\s・ー]+$/.test(t)&&!editing)$('#iYomi').value=hira(t);if(!cover)drawCover()};
 $('#cancel').onclick=closeEd;
 $('#ov').onclick=e=>{if(e.target.id==='ov')closeEd()};
@@ -361,6 +375,7 @@ $('#form').onsubmit=e=>{
   const d={title:$('#iTitle').value.trim(),yomi:$('#iYomi').value.trim(),author:$('#iAuthor').value.trim(),status:$('#iStatus').value,
     latest:+$('#iLatest').value||'',memo:$('#iMemo').value.trim(),rating:rate,cover,purchases:pur,updated:Date.now()};
   if(!d.title)return;
+  if(showDup()){$('#iTitle').focus();return}
   if(editing)Object.assign(editing,d);else books.push({id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...d});
   closeEd();commit(prev,editing?'保存しました':`「${d.title}」を追加しました`);
 };
