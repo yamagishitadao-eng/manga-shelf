@@ -258,8 +258,8 @@ textarea{width:100%;min-height:160px;font-family:ui-monospace,monospace;font-siz
 const K='manga-shelf-v1';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const APPS=['ピッコマ','Kindle','ブックウォーカー','DMMブックス','DLsite','アメーバマンガ','ジャンプ+','マガポケ','LINEマンガ','コミックシーモア','ebookjapan','BookLive!','楽天Kobo','紙の本'];
-const COLS=[[/ピッコマ|piccoma/i,'#f0a500'],[/kindle|キンドル/i,'#2f6fd6'],[/walker|ウォーカー/i,'#00a0e9'],[/dmm/i,'#5b5b66'],[/dlsite/i,'#1d3d8f'],[/ameba|アメーバ/i,'#8bc34a'],
+const APPS=['ピッコマ','Kindle','ブックウォーカー','DMMブックス','DLsite','アメーバマンガ','U-NEXT','ジャンプ+','マガポケ','LINEマンガ','コミックシーモア','ebookjapan','BookLive!','楽天Kobo','紙の本'];
+const COLS=[[/ピッコマ|piccoma/i,'#f0a500'],[/kindle|キンドル/i,'#2f6fd6'],[/walker|ウォーカー/i,'#00a0e9'],[/dmm/i,'#5b5b66'],[/dlsite/i,'#1d3d8f'],[/ameba|アメーバ/i,'#8bc34a'],[/u-?next|ユーネクスト/i,'#b5179e'],
  [/ジャンプ|jump/i,'#e2231a'],[/マガポケ/i,'#12a39a'],[/line/i,'#06c755'],[/シーモア/i,'#e8508c'],[/ebook|イーブック/i,'#8a3ffc'],[/booklive|ブックライブ/i,'#ff7a00'],[/kobo|楽天/i,'#bf0000'],[/紙/,'#8b5a2b']];
 const col=a=>{if(!a)return'#9a948a';for(const[r,c]of COLS)if(r.test(a))return c;let h=0;for(const ch of a)h=(h*37+ch.charCodeAt(0))%360;return`hsl(${h} 55% 50%)`};
 const volApp=b=>{const m=new Map();for(const p of b.purchases||[])for(let v=+p.from;v<=(+p.to||+p.from)&&v<2000;v++)m.set(v,p.app||'');return m};
