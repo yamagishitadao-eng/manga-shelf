@@ -60,6 +60,36 @@ main{max-width:1100px;margin:auto;padding:12px max(5vw,16px) 80px}
 .cvf .cover{width:64px;height:90px;border-radius:6px}
 .cvf .cover span{font-size:12px}
 .pr select{padding:8px}
+.tpick{display:flex;flex-wrap:wrap;gap:6px}
+.tpick button{min-width:48px;min-height:44px;padding:4px 12px;border-radius:10px;border:2px solid transparent;font:400 18px "Dela Gothic One",sans-serif;color:#151412}
+.tpick button.none{background:var(--soft);color:var(--ink);font:700 14px "Zen Kaku Gothic New",sans-serif}
+.tpick button.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg) inset}
+.tpick.big button{min-width:64px;min-height:56px;font-size:24px;flex:1 1 64px}
+.tpick.big button.none{flex-basis:100%;min-height:48px;font-size:15px}
+.tbadge{display:inline-block;min-width:26px;text-align:center;font:400 13px/1.7 "Dela Gothic One",sans-serif;padding:0 6px;border-radius:6px;color:#151412;margin-left:6px;vertical-align:2px}
+.tsel{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 10px}
+.tsel select{flex:1 1 200px}
+h2.ttl{font:400 22px/1.2 "Dela Gothic One",sans-serif;margin:4px 0 12px}
+.tier{display:flex;border:1.5px solid var(--ink);border-bottom:0;background:var(--card)}
+.tier:first-child{border-radius:12px 12px 0 0}
+.tier:last-child{border-bottom:1.5px solid var(--ink);border-radius:0 0 12px 12px}
+.tl{flex:none;width:72px;display:flex;align-items:center;justify-content:center;font:400 26px/1 "Dela Gothic One",sans-serif;color:#151412;padding:6px;text-align:center;word-break:break-all}
+.tl small{font-size:13px}
+.tz{flex:1;display:flex;flex-wrap:wrap;gap:6px;padding:8px;min-height:64px;align-content:flex-start}
+.tz.target{background:color-mix(in srgb,var(--red) 10%,var(--card));cursor:pointer}
+.tc{display:flex;align-items:center;gap:8px;min-height:48px;max-width:200px;padding:4px 10px 4px 4px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);text-align:left;line-height:1.25}
+.tc .cover{width:30px;height:42px;padding:2px;border-radius:4px}.tc .cover span{font-size:8px}
+.tc span.tt{display:grid}.tc b{font-size:14px}.tc small{font-size:12px;color:var(--mute)}
+.tc.sel{border-color:var(--red);box-shadow:0 0 0 2px var(--red)}
+.pool{margin-top:18px}.pool h3{font-size:15px;margin:0 0 6px}
+.pool .tz{border:1.5px dashed var(--mute);border-radius:12px;background:transparent}
+.tbar{position:sticky;bottom:0;z-index:6;margin:14px calc(-1*max(5vw,16px)) 0;padding:10px max(5vw,16px);background:var(--ink);color:var(--bg);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tbar .nm{flex:1 1 100%;font-size:14px}
+.tbar button{min-height:44px;min-width:48px;padding:6px 10px;border-radius:10px;border:0;font:400 18px "Dela Gothic One",sans-serif;color:#151412}
+.tbar .op{background:transparent;border:1.5px solid color-mix(in srgb,var(--bg) 40%,transparent);color:var(--bg);font:700 14px "Zen Kaku Gothic New",sans-serif}
+.te{display:grid;grid-template-columns:minmax(0,1fr) auto 40px 40px 40px;gap:6px;align-items:center;margin-bottom:6px}
+.sw{display:flex;gap:4px}.sw button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;padding:0}.sw button.on{border-color:var(--ink)}
+@media(max-width:600px){.tl{width:56px;font-size:22px}.tc{max-width:160px}.te{grid-template-columns:minmax(0,1fr) 40px 40px 40px}.te .sw{grid-column:1/-1;grid-row:2}}
 .mprev{display:grid;gap:4px;font-size:14px;margin-bottom:4px}
 .mprev:empty{display:none}
 .mprev .sum{font-weight:700}
@@ -158,7 +188,7 @@ textarea{width:100%;min-height:160px;font-family:ui-monospace,monospace;font-siz
 </div></header>
 
 <div class="bar">
-  <div class="tabs" id="tabs"><button data-v="shelf" class="on">本棚</button><button data-v="unread">未読リスト<b id="unN">0</b></button></div>
+  <div class="tabs" id="tabs"><button data-v="shelf" class="on">本棚</button><button data-v="unread">未読リスト<b id="unN">0</b></button><button data-v="tier">ティア表</button></div>
   <div class="bwrap">
     <input type="search" id="q" placeholder="タイトル・作者・アプリで検索" aria-label="検索">
     <select id="fApp" aria-label="アプリで絞り込み"></select>
@@ -192,13 +222,14 @@ textarea{width:100%;min-height:160px;font-family:ui-monospace,monospace;font-siz
     <p class="hint" id="cvHint">新しく追加するときは、タイトルを入れると自動で探します。違う表紙なら候補から選び直してください。</p>
   </div>
   <div class="row2">
-    <div class="f"><label for="iAuthor">作者</label><input id="iAuthor"></div>
+    <div class="f"><label for="iAuthor">作者</label><input id="iAuthor" list="authorsDL"></div>
     <div class="f"><label for="iStatus">状態</label><select id="iStatus"><option>連載中</option><option>完結</option></select></div>
   </div>
   <div class="row2">
     <div class="f"><span class="lbl">評価</span><div class="rate" id="iRate"></div></div>
     <div class="f"><label for="iLatest">既刊（最新巻）</label><input id="iLatest" type="number" min="0" inputmode="numeric" placeholder="例: 14"></div>
   </div>
+  <div class="f"><span class="lbl">ティア</span><div class="tpick" id="iTier"></div></div>
   <div class="f"><span class="lbl">どこまで読んだ</span>
     <div class="rdw"><input id="iRead" type="number" min="0" inputmode="numeric" aria-label="何巻"><span>巻の</span><input id="iPage" type="number" min="0" inputmode="numeric" aria-label="何ページ" placeholder="最後"><span>ページまで</span></div>
     <p class="hint">巻を読み終えたならページは空のまま。読みかけならページを入れると「しおり」になります。</p>
@@ -250,7 +281,20 @@ textarea{width:100%;min-height:160px;font-family:ui-monospace,monospace;font-siz
   </div>
 </div></div>
 
-<datalist id="apps"></datalist>
+<datalist id="apps"></datalist><datalist id="authorsDL"></datalist>
+<div class="ov" id="ovQ"><div class="panel">
+  <h2 id="qT"></h2>
+  <p class="hint" id="qS" style="margin:-6px 0 12px"></p>
+  <div class="tpick big" id="qPick"></div>
+  <div class="acts"><span class="sp"></span><button type="button" class="btn ghost" id="qLater">あとで</button></div>
+</div></div>
+<div class="ov" id="ovT"><div class="panel">
+  <h2>ティアを編集</h2>
+  <div id="teList"></div>
+  <button type="button" class="btn ghost" id="teAdd">＋ ティアを追加</button>
+  <p class="hint">ティアを削除すると、そこにあった作品は「未分類」に戻ります。</p>
+  <div class="acts"><span class="sp"></span><button type="button" class="btn ghost" id="teClose">閉じる</button><button type="button" class="btn pri" id="teSave">保存</button></div>
+</div></div>
 <div class="toast" id="toast"><span id="tMsg"></span><button id="tUndo">元に戻す</button></div>
 
 <script>
@@ -301,7 +345,7 @@ function card(b){
    <div class="cb">
     <div class="top"><h3>${esc(b.title)}<small>${stBadge(b)}${b.author?' '+esc(b.author):''}</small></h3>
      <button class="plus" data-plus="${esc(b.id)}" aria-label="${esc(b.title)}の${max+1}巻を追加">+1巻</button></div>
-    <div class="stars" aria-label="評価${b.rating||0}">${stars(b.rating||0)}</div>
+    <div class="stars" aria-label="評価${b.rating||0}">${stars(b.rating||0)}${tierBadge(b)}</div>
     ${shelf}
     <div class="line">所持 <b>${s.size}</b>冊${s.size?`（${esc(ranges(s))}巻）`:''}${b.latest?` / 既刊${+b.latest}巻`:''}
      ${nw?`<span class="tag new">新刊${nw}冊</span>`:''}${gaps.length?`<span class="tag gap">抜け ${esc(ranges(new Set(gaps)))}巻</span>`:''}${b.status==='完結'&&!nw&&!gaps.length&&s.size?'<span class="tag done">コンプ</span>':''}</div>
@@ -312,6 +356,73 @@ function card(b){
 }
 
 let view='shelf';
+// ===== ティア表 =====
+const TPAL=['#ff6b6b','#ffa94d','#ffd43b','#8ce99a','#74c0fc','#b197fc','#f783ac','#ced4da'];
+const DEF_T=[['S',0],['A',1],['B',2],['C',3],['D',4]].map(([l,i])=>({id:l,label:l,color:TPAL[i]}));
+let tiers;try{tiers=JSON.parse(localStorage.getItem(K+'-tiers'))}catch(e){}
+if(!Array.isArray(tiers)||!tiers.length)tiers=DEF_T;
+const saveTiers=()=>{try{localStorage.setItem(K+'-tiers',JSON.stringify(tiers))}catch(e){}};
+const NOA='作者未登録';
+const authorOf=b=>(b.author||'').trim()||NOA;
+const authorList=()=>{const m=new Map();for(const b of books){const a=(b.author||'').trim();if(a&&!m.has(norm(a)))m.set(norm(a),a)}return[...m.values()].sort((x,y)=>coll.compare(x,y))};
+let tFilter='',tSel=null;
+const tierBadge=b=>{const t=tiers.find(x=>x.id===b.tier);return t?`<span class="tbadge" style="background:${esc(t.color)}" title="ティア">${esc(t.label.slice(0,3))}</span>`:''};
+const pickHTML=cur=>tiers.map(t=>`<button type="button" data-pt="${esc(t.id)}" class="${cur===t.id?'on':''}" style="background:${esc(t.color)}">${esc(t.label.slice(0,4))}</button>`).join('')+`<button type="button" data-pt="" class="none${tiers.some(t=>t.id===cur)?'':' on'}">未分類</button>`;
+let qId=null;
+function askTier(b,finished){
+  qId=b.id;const t=tiers.find(x=>x.id===b.tier);
+  $('#qT').textContent=finished?`「${b.title}」読み終わり！`:`「${b.title}」を読んだ！`;
+  $('#qS').textContent=t?`今は ${t.label}。ランクを変えるなら選んでください`:'ティア表のどこに入れますか？';
+  $('#qPick').innerHTML=pickHTML(b.tier);$('#toast').classList.remove('on');$('#ovQ').classList.add('on');
+}
+$('#qPick').onclick=e=>{const p=e.target.closest('[data-pt]');if(!p)return;const b=books.find(x=>x.id===qId);$('#ovQ').classList.remove('on');if(!b)return;
+  const t=tiers.find(x=>x.id===p.dataset.pt);if(b.tier!==p.dataset.pt){b.tier=p.dataset.pt;b.tierOrder=Math.max(0,...books.map(x=>x.tierOrder||0))+1;save();render()}
+  toast(t?`「${b.title}」を ${t.label} に入れました`:`「${b.title}」は未分類のままです`)};
+$('#qLater').onclick=()=>$('#ovQ').classList.remove('on');
+$('#ovQ').onclick=e=>{if(e.target.id==='ovQ')$('#ovQ').classList.remove('on')};
+function tchip(b){return `<button class="tc${tSel===b.id?' sel':''}" data-tw="${esc(b.id)}">${coverHTML(b)}<span class="tt"><b>${esc(b.title)}</b>${tFilter?'':`<small>${esc(authorOf(b))}</small>`}</span></button>`}
+function renderTier(list){
+  const aus=authorList(),hasNo=books.some(b=>!(b.author||'').trim());
+  if(tFilter&&tFilter!==NOA&&!aus.some(a=>norm(a)===norm(tFilter)))tFilter='';
+  const ws=list.filter(b=>!tFilter||norm(authorOf(b))===norm(tFilter)).sort((a,b)=>(a.tierOrder||0)-(b.tierOrder||0));
+  const valid=new Set(tiers.map(t=>t.id)),pool=ws.filter(b=>!valid.has(b.tier));
+  const opt=a=>`<option value="${esc(a)}"${norm(a)===norm(tFilter)?' selected':''}>${esc(a)}（${books.filter(b=>norm(authorOf(b))===norm(a)).length}）</option>`;
+  $('#list').innerHTML=`<div class="tsel"><select id="tAuthor" aria-label="作家で絞り込み"><option value="">全作家のティア表</option>${aus.map(opt).join('')}${hasNo?opt(NOA):''}</select></div>
+   <h2 class="ttl">${tFilter?esc(tFilter)+'の作品ティア表':'全作品ティア表'}</h2>
+   <div>${tiers.map(t=>`<div class="tier"><div class="tl" style="background:${esc(t.color)}">${t.label.length>3?`<small>${esc(t.label)}</small>`:esc(t.label)}</div><div class="tz${tSel?' target':''}" data-tz="${esc(t.id)}">${ws.filter(b=>b.tier===t.id).map(tchip).join('')}</div></div>`).join('')}</div>
+   <div class="pool"><h3>未分類 <small style="color:var(--mute);font-weight:400">${pool.length?pool.length+'作品':''}</small></h3><div class="tz${tSel?' target':''}" data-tz="">${pool.length?pool.map(tchip).join(''):'<span class="hint">ここに未分類の作品が入ります</span>'}</div></div>
+   <div class="acts"><button class="btn ghost" id="tCopy">テキストでコピー</button><button class="btn ghost" id="tEdit">ティアを編集</button></div>
+   <p class="hint">作品をタップして選び、下のランクボタンか、置きたい段をタップすると移動します。作家ごとの表は、上の切り替えで作家を選びます（作者は各作品の編集画面で入力）。</p>
+   ${tBar()}`;
+}
+function tBar(){const b=books.find(x=>x.id===tSel);if(!b)return'';
+  return `<div class="tbar"><div class="nm"><b>${esc(b.title)}</b>　をどこへ？</div>${tiers.map(t=>`<button data-to="${esc(t.id)}" style="background:${esc(t.color)}">${esc(t.label.slice(0,3))}</button>`).join('')}<button class="op" data-to="">未分類</button><button class="op" data-mv="-1" aria-label="左へ">←</button><button class="op" data-mv="1" aria-label="右へ">→</button><button class="op" data-tx>×</button></div>`}
+function tMove(id,tier){const b=books.find(x=>x.id===id);if(!b)return;b.tier=tier;b.tierOrder=Math.max(0,...books.map(x=>x.tierOrder||0))+1;save();render()}
+function tNudge(d){const b=books.find(x=>x.id===tSel);if(!b)return;const valid=new Set(tiers.map(t=>t.id)),same=x=>valid.has(b.tier)?x.tier===b.tier:!valid.has(x.tier);
+  const row=books.filter(x=>same(x)&&(!tFilter||norm(authorOf(x))===norm(tFilter))).sort((a,c)=>(a.tierOrder||0)-(c.tierOrder||0));
+  const i=row.indexOf(b),j=i+d;if(j<0||j>=row.length)return;const o=row[j].tierOrder||0;row[j].tierOrder=b.tierOrder||0;b.tierOrder=o;save();render()}
+function tierClick(e){
+  if(view!=='tier')return false;
+  const c=e.target.closest('[data-tw]');if(c){tSel=tSel===c.dataset.tw?null:c.dataset.tw;render();return true}
+  const bt=e.target.closest('.tbar button');if(bt){if(bt.dataset.to!==undefined)tMove(tSel,bt.dataset.to);else if(bt.dataset.mv)tNudge(+bt.dataset.mv);else{tSel=null;render()}return true}
+  if(e.target.id==='tCopy'){tCopy();return true}
+  if(e.target.id==='tEdit'){tmpT=tiers.map(t=>({...t}));drawTE();$('#ovT').classList.add('on');return true}
+  const z=e.target.closest('[data-tz]');if(z&&tSel){tMove(tSel,z.dataset.tz);return true}
+  return true;
+}
+async function tCopy(){const ws=books.filter(b=>!tFilter||norm(authorOf(b))===norm(tFilter)).sort((a,b)=>(a.tierOrder||0)-(b.tierOrder||0));
+  const txt=`【${tFilter?tFilter+'の作品ティア表':'全作品ティア表'}】\n`+tiers.map(t=>`${t.label}：${ws.filter(b=>b.tier===t.id).map(b=>tFilter?b.title:`${b.title}（${authorOf(b)}）`).join('、')||'—'}`).join('\n');
+  try{await navigator.clipboard.writeText(txt);toast('コピーしました')}catch(e){$('#bTxt').value=txt;$('#ovB').classList.add('on');toast('コピーできなかったので表示しました')}}
+let tmpT=[];
+function drawTE(){$('#teList').innerHTML=tmpT.map((t,i)=>`<div class="te" data-i="${i}"><input value="${esc(t.label)}" aria-label="ティア名" maxlength="12"><div class="sw">${TPAL.map(c=>`<button type="button" data-c="${c}" class="${c===t.color?'on':''}" style="background:${c}" aria-label="色"></button>`).join('')}</div><button type="button" class="x" data-up aria-label="上へ">↑</button><button type="button" class="x" data-dn aria-label="下へ">↓</button><button type="button" class="x" data-rm aria-label="削除">×</button></div>`).join('')}
+$('#teList').oninput=e=>{tmpT[+e.target.closest('.te').dataset.i].label=e.target.value};
+$('#teList').onclick=e=>{const r=e.target.closest('.te');if(!r)return;const i=+r.dataset.i,b=e.target;
+  if(b.dataset.c){tmpT[i].color=b.dataset.c;drawTE()}else if(b.dataset.up!==undefined&&i>0){[tmpT[i-1],tmpT[i]]=[tmpT[i],tmpT[i-1]];drawTE()}
+  else if(b.dataset.dn!==undefined&&i<tmpT.length-1){[tmpT[i+1],tmpT[i]]=[tmpT[i],tmpT[i+1]];drawTE()}else if(b.dataset.rm!==undefined){tmpT.splice(i,1);drawTE()}};
+$('#teAdd').onclick=()=>{tmpT.push({id:'t'+Date.now().toString(36),label:'新',color:TPAL[tmpT.length%TPAL.length]});drawTE()};
+$('#teSave').onclick=()=>{tiers=tmpT.filter(t=>t.label.trim()).map(t=>({...t,label:t.label.trim()}));saveTiers();$('#ovT').classList.remove('on');render();toast('ティアを保存しました')};
+$('#teClose').onclick=()=>$('#ovT').classList.remove('on');
+$('#ovT').onclick=e=>{if(e.target.id==='ovT')$('#ovT').classList.remove('on')};
 function urow(b){
   const{un,pg,rv}=info(b),va=volApp(b),nx=un[0],app=va.get(nx)||'';
   return `<article class="urow" data-id="${esc(b.id)}" tabindex="0">${coverHTML(b)}
@@ -325,13 +436,16 @@ function markRead(id,all){
   const b=books.find(x=>x.id===id);if(!b)return;const prev=before(),{un,max}=info(b);if(!un.length)return;
   b.read=all?max:un[0];b.page='';b.updated=Date.now();
   commit(prev,all?`「${b.title}」を全部読んだ`:`「${b.title}」${un[0]}巻を読んだ`);
+  const fin=!info(b).un.length,ranked=tiers.some(t=>t.id===b.tier);
+  if(fin||!ranked)setTimeout(()=>askTier(b,fin),250);
 }
-$('#tabs').onclick=e=>{const t=e.target.closest('[data-v]');if(!t)return;view=t.dataset.v;for(const x of $('#tabs').children)x.classList.toggle('on',x===t);render();window.scrollTo(0,0)};
+$('#tabs').onclick=e=>{const t=e.target.closest('[data-v]');if(!t)return;view=t.dataset.v;tSel=null;for(const x of $('#tabs').children)x.classList.toggle('on',x===t);render();window.scrollTo(0,0)};
 function render(){
   const q=$('#q').value.trim().toLowerCase(),fa=$('#fApp').value,ff=$('#fFlag').value,so=$('#sort').value;
   const apps=allApps(),cur=fa;
   $('#fApp').innerHTML='<option value="">全アプリ</option>'+apps.filter(a=>books.some(b=>(b.purchases||[]).some(p=>p.app===a))).map(a=>`<option${a===cur?' selected':''}>${esc(a)}</option>`).join('');
   $('#apps').innerHTML=apps.map(a=>`<option value="${esc(a)}">`).join('');
+  $('#authorsDL').innerHTML=authorList().map(a=>`<option value="${esc(a)}">`).join('');
   let vol=0,newT=0,unV=0,unT=0;for(const b of books){const i=info(b);vol+=i.s.size;if(i.nw)newT++;unV+=i.un.length;if(i.un.length)unT++}
   $('#unN').textContent=unT;
   $('#stats').innerHTML=`<div class="stat"><b>${books.length}</b><small>作品</small></div><div class="stat"><b>${vol}</b><small>所持冊数</small></div><div class="stat"><b>${unV}</b><small>未読冊数</small></div><div class="stat${newT?' alert':''}"><b>${newT}</b><small>新刊未購入</small></div>`;
@@ -344,6 +458,7 @@ function render(){
     return true});
   const byKana=(a,b)=>coll.compare(key(a),key(b));
   list.sort(so==='rate'?(a,b)=>(b.rating||0)-(a.rating||0)||byKana(a,b):so==='upd'?(a,b)=>(b.updated||0)-(a.updated||0):byKana);
+  if(view==='tier'){$('#idx').style.display='none';renderTier(list);return}
   if(view==='unread'){
     $('#idx').style.display='none';
     if(!list.length){$('#list').innerHTML='<div class="empty"><b>未読の作品はありません</b>カードを開いて「何巻まで読んだ」を入れると、ここに未読の巻が並びます</div>';return}
@@ -376,7 +491,7 @@ function plusOne(id){
 }
 
 // editor
-let editing=null,tmp=[],rate=0,delArmed=false;
+let edTier='',editing=null,tmp=[],rate=0,delArmed=false;
 function drawRate(){$('#iRate').innerHTML=[1,2,3,4,5].map(n=>`<button type="button" data-r="${n}" class="${n<=rate?'on':''}" aria-label="${n}点">★</button>`).join('')}
 function appField(p){
   const list=allApps();
@@ -393,6 +508,7 @@ function openEd(id){
   $('#fT').textContent=editing?'作品を編集':'作品を追加';
   $('#iTitle').value=b.title||'';$('#iYomi').value=b.yomi||'';$('#iAuthor').value=b.author||'';
   $('#iStatus').value=b.status||'連載中';$('#iLatest').value=b.latest||'';$('#iRead').value=b.read||'';$('#iPage').value=b.page||'';$('#iMemo').value=b.memo||'';
+  edTier=b.tier||'';$('#iTier').innerHTML=pickHTML(edTier);
   rate=b.rating||0;tmp=(b.purchases||[]).map(p=>({...p}));if(!tmp.length)tmp=[{app:'',from:1,to:''}];
   cover=okCover(b.cover)?b.cover:'';drawCover();drawCands([]);seq++;
   $('#cvHint').textContent=blocked()?NOTE:'新しく追加するときは、タイトルを入れると自動で探します。';
@@ -453,15 +569,17 @@ $('#dup').onclick=e=>{if(e.target.id==='dupOpen'){const d=findDup($('#iTitle').v
 $('#iTitle').addEventListener('input',showDup);
 $('#iTitle').oninput=e=>{const t=e.target.value;if(/^[ぁ-ヿー\s・ー]+$/.test(t)&&!editing)$('#iYomi').value=hira(t);if(!cover)drawCover()};
 $('#cancel').onclick=closeEd;
+$('#iTier').onclick=e=>{const p=e.target.closest('[data-pt]');if(!p)return;edTier=p.dataset.pt;$('#iTier').innerHTML=pickHTML(edTier)};
 $('#readAll').onclick=()=>{const m=Math.max(0,...tmp.map(p=>Math.max(+p.to||0,+p.from||0)));$('#iRead').value=m||'';$('#iPage').value=''};
 $('#ov').onclick=e=>{if(e.target.id==='ov')closeEd()};
 $('#form').onsubmit=e=>{
   e.preventDefault();const prev=before();
   const pur=tmp.filter(p=>+p.from>0).map(p=>({app:(p.app||'').trim(),from:+p.from,to:Math.max(+p.to||+p.from,+p.from)}));
   const d={title:$('#iTitle').value.trim(),yomi:$('#iYomi').value.trim(),author:$('#iAuthor').value.trim(),status:$('#iStatus').value,
-    latest:+$('#iLatest').value||'',read:+$('#iRead').value||0,page:+$('#iRead').value?(+$('#iPage').value||''):'',memo:$('#iMemo').value.trim(),rating:rate,cover,purchases:pur,updated:Date.now()};
+    latest:+$('#iLatest').value||'',read:+$('#iRead').value||0,page:+$('#iRead').value?(+$('#iPage').value||''):'',memo:$('#iMemo').value.trim(),rating:rate,cover,purchases:pur,updated:Date.now(),tier:edTier};
   if(!d.title)return;
   if(showDup()){$('#iTitle').focus();return}
+  if((editing?editing.tier||'':'')!==edTier)d.tierOrder=Math.max(0,...books.map(x=>x.tierOrder||0))+1;
   if(editing)Object.assign(editing,d);else books.push({id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...d});
   closeEd();commit(prev,editing?'保存しました':`「${d.title}」を追加しました`);
 };
@@ -475,7 +593,8 @@ $('#list').addEventListener('change',e=>{const id=e.target.dataset.pg;if(!id)ret
   const b=books.find(x=>x.id===id);if(!b)return;const prev=before(),{un,rd}=info(b),nx=un[0],p=+e.target.value||0;
   if(p>0){b.read=nx;b.page=p}else{b.read=rd;b.page=''}b.updated=Date.now();
   commit(prev,p>0?`「${b.title}」${nx}巻 ${p}ページにしおり`:'しおりを外しました')});
-$('#list').onclick=e=>{if(e.target.closest('.pg'))return;const r1=e.target.closest('[data-r1],[data-ra]');if(r1){markRead(r1.dataset.r1||r1.dataset.ra,!!r1.dataset.ra);return}const u=e.target.closest('.urow');if(u){openEd(u.dataset.id);return}const p=e.target.closest('[data-plus]');if(p){e.stopPropagation();plusOne(p.dataset.plus);return}const c=e.target.closest('.card');if(c)openEd(c.dataset.id)};
+$('#list').addEventListener('input',e=>{if(e.target.id==='tAuthor'){tFilter=e.target.value;tSel=null;render()}});
+$('#list').onclick=e=>{if(tierClick(e))return;if(e.target.closest('.pg'))return;const r1=e.target.closest('[data-r1],[data-ra]');if(r1){markRead(r1.dataset.r1||r1.dataset.ra,!!r1.dataset.ra);return}const u=e.target.closest('.urow');if(u){openEd(u.dataset.id);return}const p=e.target.closest('[data-plus]');if(p){e.stopPropagation();plusOne(p.dataset.plus);return}const c=e.target.closest('.card');if(c)openEd(c.dataset.id)};
 $('#list').onkeydown=e=>{if(e.key==='Enter'&&(e.target.classList.contains('card')||e.target.classList.contains('urow')))openEd(e.target.dataset.id)};
 $('#idx').onclick=e=>{const g=e.target.dataset.g;if(g)document.getElementById('g-'+g)?.scrollIntoView({behavior:'smooth'})};
 ['#q','#fApp','#fFlag','#sort'].forEach(s=>$(s).addEventListener('input',render));
@@ -484,7 +603,7 @@ try{const s=localStorage.getItem(K+'-sort');if(s)$('#sort').value=s}catch(e){}
 $('#sort').addEventListener('change',()=>{try{localStorage.setItem(K+'-sort',$('#sort').value)}catch(e){}});
 
 // backup
-const json=()=>JSON.stringify(books,null,1);
+const json=()=>JSON.stringify({books,tiers},null,1);
 // まとめて登録
 function parseLines(txt){
   const map=new Map();
@@ -550,15 +669,16 @@ $('#bAuto').onclick=async()=>{
   toast(`${ok}作品の表紙を取得しました（違うものはカードを開いて選び直せます）`);
 };
 $('#bLoad').onclick=()=>{
-  try{const d=JSON.parse($('#bTxt').value);if(!Array.isArray(d))throw 0;const prev=before();
+  try{let d=JSON.parse($('#bTxt').value);if(d&&Array.isArray(d.tiers)&&d.tiers.length){tiers=d.tiers.filter(t=>t&&t.id).map(t=>({id:String(t.id),label:String(t.label||'?').slice(0,12),color:TPAL.includes(t.color)?t.color:TPAL[7]}));saveTiers()}
+    if(d&&Array.isArray(d.books))d=d.books;if(!Array.isArray(d))throw 0;const prev=before();
     books=d.filter(b=>b&&b.title).map((b,i)=>({id:String(b.id||'m'+i+Date.now()),title:String(b.title),yomi:String(b.yomi||''),author:String(b.author||''),status:b.status==='完結'?'完結':'連載中',
-      latest:+b.latest||'',read:+b.read||0,page:+b.page||'',rating:Math.min(5,Math.max(0,+b.rating||0)),memo:String(b.memo||''),cover:okCover(b.cover)?b.cover:'',updated:+b.updated||Date.now(),
+      latest:+b.latest||'',read:+b.read||0,page:+b.page||'',rating:Math.min(5,Math.max(0,+b.rating||0)),memo:String(b.memo||''),cover:okCover(b.cover)?b.cover:'',updated:+b.updated||Date.now(),tier:String(b.tier||''),tierOrder:+b.tierOrder||0,
       purchases:(Array.isArray(b.purchases)?b.purchases:[]).map(p=>({app:String(p.app||''),from:+p.from||1,to:+p.to||+p.from||1}))}));
     $('#ovB').classList.remove('on');commit(prev,`${books.length}作品を読み込みました`)}
   catch(e){toast('読み込めませんでした。内容を確認してください')}
 };
 try{if(window.self!==window.top)$('#bDl').style.display='none'}catch(e){$('#bDl').style.display='none'}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeEd();$('#ovM').classList.remove('on');$('#ovB').classList.remove('on')}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeEd();$('#ovQ').classList.remove('on');$('#ovT').classList.remove('on');$('#ovM').classList.remove('on');$('#ovB').classList.remove('on')}});
 render();
 }
 </script>
