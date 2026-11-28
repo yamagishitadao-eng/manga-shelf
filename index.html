@@ -3,11 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>本棚メモ</title>
-<meta name="apple-mobile-web-app-title" content="本棚メモ">
-<meta name="application-name" content="本棚メモ">
-<meta name="robots" content="noindex,nofollow">
-<meta name="referrer" content="no-referrer">
+<title>まんが本棚</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
 <style>
@@ -202,7 +198,7 @@ body.hasbar .toast{bottom:170px}
 </head>
 <body>
 <header><div class="hwrap">
-  <h1>本棚<span>メモ</span></h1>
+  <h1>まんが<span>本棚</span></h1>
   <div class="stats" id="stats"></div>
 </div></header>
 
@@ -231,7 +227,7 @@ body.hasbar .toast{bottom:170px}
   <div class="f"><label for="iTitle">タイトル</label><input id="iTitle" required aria-describedby="dup">
     <div class="dup" id="dup" role="alert"></div></div>
   <div class="f"><label for="iYomi">よみがな（あいうえお順に使います）</label><input id="iYomi" placeholder="ひらがな・カタカナで"></div>
-  <div class="f" hidden><span class="lbl">表紙</span>
+  <div class="f"><span class="lbl">表紙</span>
     <div class="cvf"><div class="cover" id="cvPrev"></div>
       <div style="display:grid;gap:6px">
         <button type="button" class="btn" id="cvFind">1巻の表紙を自動で探す</button>
@@ -289,7 +285,7 @@ body.hasbar .toast{bottom:170px}
   <h2>バックアップ</h2>
   <p class="hint">データはこのブラウザに保存されます。機種変更や別の端末で使うときは、ここで書き出して読み込んでください。</p>
   <textarea id="bTxt" aria-label="データ"></textarea>
-  <div class="acts" hidden><button class="btn" id="bAuto">表紙のない作品の表紙をまとめて取得</button></div>
+  <div class="acts"><button class="btn" id="bAuto">表紙のない作品の表紙をまとめて取得</button></div>
   <div class="acts">
     <button class="btn ghost" id="bCopy">コピー</button>
     <button class="btn ghost" id="bDl">ファイルに保存</button>
@@ -327,16 +323,20 @@ body.hasbar .toast{bottom:170px}
 
 <script>
 {
-const K='shelf-memo-v1';
+const K='manga-shelf-v1';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const APPS=['DLsite','FANZA','DMMブックス','コミックシーモア','BookLive!','Kindle','Komiflo','ebookjapan','楽天Kobo','紙の本'];
-const COLS=[[/fanza/i,'#e8383d'],[/komiflo/i,'#2bb3c0'],[/ピッコマ|piccoma/i,'#f0a500'],[/kindle|キンドル/i,'#2f6fd6'],[/walker|ウォーカー/i,'#00a0e9'],[/dmm/i,'#5b5b66'],[/dlsite/i,'#1d3d8f'],[/ameba|アメーバ/i,'#8bc34a'],[/u-?next|ユーネクスト/i,'#b5179e'],
+const APPS=['ピッコマ','Kindle','ブックウォーカー','DMMブックス','DLsite','アメーバマンガ','U-NEXT','ジャンプ+','マガポケ','LINEマンガ','コミックシーモア','ebookjapan','BookLive!','楽天Kobo','紙の本'];
+const COLS=[[/ピッコマ|piccoma/i,'#f0a500'],[/kindle|キンドル/i,'#2f6fd6'],[/walker|ウォーカー/i,'#00a0e9'],[/dmm/i,'#5b5b66'],[/dlsite/i,'#1d3d8f'],[/ameba|アメーバ/i,'#8bc34a'],[/u-?next|ユーネクスト/i,'#b5179e'],
  [/ジャンプ|jump/i,'#e2231a'],[/マガポケ/i,'#12a39a'],[/line/i,'#06c755'],[/シーモア/i,'#e8508c'],[/ebook|イーブック/i,'#8a3ffc'],[/booklive|ブックライブ/i,'#ff7a00'],[/kobo|楽天/i,'#bf0000'],[/紙/,'#8b5a2b']];
 const col=a=>{if(!a)return'#9a948a';for(const[r,c]of COLS)if(r.test(a))return c;let h=0;for(const ch of a)h=(h*37+ch.charCodeAt(0))%360;return`hsl(${h} 55% 50%)`};
 const volApp=b=>{const m=new Map();for(const p of b.purchases||[])for(let v=+p.from;v<=(+p.to||+p.from)&&v<2000;v++)m.set(v,p.app||'');return m};
 const runs=b=>{const m=volApp(b),r=[];for(const v of [...m.keys()].sort((x,y)=>x-y)){const a=m.get(v),l=r.at(-1);if(l&&l.app===a&&l.to===v-1)l.to=v;else r.push({app:a,from:v,to:v})}return r};
-const SAMPLE=[];
+const SAMPLE=[
+ {title:'星屑ベーカリー',yomi:'ほしくずべーかりー',author:'サンプル作者A',rating:5,latest:17,read:9,page:32,status:'連載中',purchases:[{app:'ピッコマ',from:1,to:10},{app:'ブックウォーカー',from:11,to:15}],memo:'これはサンプルです'},
+ {title:'鋼の羅針盤',yomi:'はがねのらしんばん',author:'サンプル作者B',rating:4,latest:9,read:9,status:'完結',purchases:[{app:'DMMブックス',from:1,to:3},{app:'アメーバマンガ',from:5,to:9}],memo:''},
+ {title:'あおぞら食堂',yomi:'あおぞらしょくどう',author:'サンプル作者C',rating:3,latest:6,read:2,status:'連載中',purchases:[{app:'紙の本',from:1,to:6}],memo:''}
+].map((b,i)=>({...b,id:'s'+i,updated:Date.now()-i*1e6}));
 let books;
 try{books=JSON.parse(localStorage.getItem(K))}catch(e){}
 if(!Array.isArray(books))books=SAMPLE;
@@ -355,7 +355,7 @@ const hue=t=>{let h=0;for(const c of t)h=(h*31+c.charCodeAt(0))%360;return h};
 const stars=n=>'★'.repeat(n)+'<i>'+'★'.repeat(5-n)+'</i>';
 const allApps=()=>[...new Set([...books.flatMap(b=>(b.purchases||[]).map(p=>p.app).filter(Boolean)),...APPS])];
 
-const okCover=c=>false&&(/^https:\/\/(books\.google\.com|books\.googleusercontent\.com|ndlsearch\.ndl\.go\.jp)\/[^\s"'<>]*$/.test(c));
+const okCover=c=>typeof c==='string'&&(/^https:\/\/(books\.google\.com|books\.googleusercontent\.com|ndlsearch\.ndl\.go\.jp)\/[^\s"'<>]*$/.test(c));
 const coverHTML=b=>`<div class="cover" style="--h:${hue(b.title||'')}">${okCover(b.cover)?`<img src="${esc(b.cover)}" alt="${esc(b.title)}の表紙" referrerpolicy="no-referrer" onerror="this.remove()">`:`<span>${esc((b.title||'？').slice(0,9))}</span>`}</div>`;
 const stBadge=b=>b.status==='完結'?`<span class="st fin">完結${b.latest?`・全${+b.latest}巻`:''}</span>`:`<span class="st">連載中${b.latest?`・既刊${+b.latest}巻`:''}</span>`;
 function card(b){
@@ -436,12 +436,12 @@ function renderTier(list){
   const ws=list.filter(b=>!tFilter||norm(authorOf(b))===norm(tFilter)).sort((a,b)=>(a.tierOrder||0)-(b.tierOrder||0));
   const valid=new Set(tiers.map(t=>t.id)),pool=ws.filter(b=>!valid.has(b.tier));
   const opt=a=>`<option value="${esc(a)}"${norm(a)===norm(tFilter)?' selected':''}>${esc(a)}（${books.filter(b=>norm(authorOf(b))===norm(a)).length}）</option>`;
-  $('#list').innerHTML=`<div class="tsel"><span class="lbl">表示する作品</span><select id="tAuthor" aria-label="作家で絞り込み"><option value="">すべての作品</option>${aus.map(opt).join('')}${hasNo?opt(NOA):''}</select></div>
+  $('#list').innerHTML=`<div class="tsel"><select id="tAuthor" aria-label="作家で絞り込み"><option value="">全作家のティア表</option>${aus.map(opt).join('')}${hasNo?opt(NOA):''}</select></div>
    <h2 class="ttl">${tFilter?esc(tFilter)+'の作品ティア表':'全作品ティア表'}</h2>
    <div>${tiers.map(t=>`<div class="tier"><div class="tl" style="background:${esc(t.color)}">${t.label.length>3?`<small>${esc(t.label)}</small>`:esc(t.label)}</div><div class="tz${tSel?' target':''}" data-tz="${esc(t.id)}">${ws.filter(b=>b.tier===t.id).map(tchip).join('')}</div></div>`).join('')}</div>
    <div class="pool"><h3>未分類 <small style="color:var(--mute);font-weight:400">${pool.length?pool.length+'作品':''}</small></h3><div class="tz${tSel?' target':''}" data-tz="">${pool.length?pool.map(tchip).join(''):'<span class="hint">ここに未分類の作品が入ります</span>'}</div></div>
    <div class="acts"><button class="btn ghost" id="tCopy">テキストでコピー</button><button class="btn ghost" id="tEdit">ティアを編集</button></div>
-   <p class="hint">作品をタップして選び、下のランクボタンか、置きたい段をタップすると移動します。並べるのは作品です。上の切り替えで作家を選ぶと、その作家の作品だけのティア表になります（作者は各作品の編集画面で入力）。</p>
+   <p class="hint">作品をタップして選び、下のランクボタンか、置きたい段をタップすると移動します。作家ごとの表は、上の切り替えで作家を選びます（作者は各作品の編集画面で入力）。</p>
    ${tBar()}`;
 }
 function tBar(){const b=books.find(x=>x.id===tSel);document.body.classList.toggle('hasbar',!!b);if(!b)return'';
@@ -591,7 +591,7 @@ async function findCovers(title){
   }
   return out.sort((a,b)=>b.score-a.score).slice(0,8);
 }
-const blocked=()=>true;
+const blocked=()=>{try{return window.self!==window.top}catch(e){return true}};
 const NOTE='表紙の自動取得はGitHub Pagesで開いたときに使えます';
 function drawCands(list){$('#cvCands').innerHTML=list.map(c=>`<button type="button" data-u="${esc(c.url)}" class="${c.url===cover?'on':''}" title="${esc(c.name)}"><img src="${esc(c.url)}" alt="${esc(c.name)}" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></button>`).join('')}
 let seq=0;
