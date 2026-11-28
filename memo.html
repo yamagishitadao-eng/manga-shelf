@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>本棚メモ</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* VOICE: 自分の本棚を眺める楽しさ、でも道具としてキビキビ
+   IDEA: 書店の棚と単行本の背表紙。所持巻は背表紙の列で見える
+   PICTURE: 各作品の「背表紙の棚」— 持ってる巻・抜け・未購入の新刊が一目で
+   COLOUR and TYPE: 紙の白・墨の黒・朱の差し色。スクリーントーンの網点。Dela Gothic One + Zen Kaku Gothic New
+   LAYOUT: 上に集計、固定ツールバー、五十音インデックス、行ごとの棚 */
+:root{color-scheme:light dark;
+--bg:light-dark(#fbfaf7,#141312);--card:light-dark(#fff,#1d1c1a);--ink:light-dark(#151412,#f1eee8);
+--mute:light-dark(#6b665e,#a39d93);--line:light-dark(#e6e2da,#33302c);--red:light-dark(#d7261e,#ff5a4f);
+--own:light-dark(#151412,#f1eee8);--gap:light-dark(#f2c94c,#e0b33a);--soft:light-dark(#efece6,#2a2825)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:clip}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+header{padding:28px max(5vw,16px) 18px;background:var(--ink);color:var(--bg);position:relative;overflow:hidden}
+header::after{content:"";position:absolute;inset:0 0 0 55%;background:radial-gradient(circle,currentColor 1.4px,transparent 1.6px) 0 0/9px 9px;opacity:.18;mask:linear-gradient(90deg,transparent,#000)}
+.hwrap{max-width:1100px;margin:auto;display:flex;flex-wrap:wrap;gap:16px 32px;align-items:end;justify-content:space-between;position:relative;z-index:1}
+h1{font:400 clamp(32px,7vw,48px)/1.05 "Dela Gothic One",sans-serif;margin:0;letter-spacing:.02em}
+h1 span{color:var(--red)}
+.stats{display:flex;gap:24px}
+.stat b{display:block;font:400 clamp(24px,5vw,32px)/1.1 "Dela Gothic One",sans-serif}
+.stat small{font-size:13px;opacity:.75}
+.stat.alert b{color:var(--red)}
+.bar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px max(5vw,16px)}
+.bwrap{max-width:1100px;margin:auto;display:flex;flex-wrap:wrap;gap:8px}
+.bwrap input[type=search]{flex:1 1 200px}
+input,select,textarea{font-size:16px;min-height:44px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card)}
+select{flex:0 1 auto}
+.btn{min-height:44px;padding:8px 16px;border-radius:10px;border:1.5px solid var(--ink);background:var(--card);font-weight:700;white-space:nowrap}
+.btn.pri{background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{border-color:var(--line)}
+.idx{max-width:1100px;margin:8px auto 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.idx button{flex:none;min-width:40px;min-height:36px;border:0;border-radius:8px;background:var(--soft);font-weight:700}
+.idx button:disabled{opacity:.3;cursor:default}
+main{max-width:1100px;margin:auto;padding:12px max(5vw,16px) 80px}
+.sec h2{font:400 22px/1 "Dela Gothic One",sans-serif;margin:28px 0 10px;display:flex;align-items:center;gap:10px;scroll-margin-top:130px}
+.sec h2::after{content:"";flex:1;height:2px;background:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:12px}
+.card{display:flex;background:var(--card);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s}
+.card:hover{border-color:var(--ink);transform:translateY(-2px)}
+.cover{flex:none;width:84px;position:relative;background:hsl(var(--h) 50% 42%);background-image:radial-gradient(circle,rgba(255,255,255,.28) 1px,transparent 1.3px);background-size:5px 5px;display:flex;align-items:center;justify-content:center;padding:8px 6px;overflow:hidden}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cover span{writing-mode:vertical-rl;color:#fff;font:400 16px/1.15 "Dela Gothic One",sans-serif;max-height:150px;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.buys{display:grid;gap:3px}
+.buy{display:flex;align-items:center;gap:8px;font-size:14px}
+.buy i{flex:none;width:12px;height:12px;border-radius:3px}
+.buy b{min-width:5.5em;white-space:nowrap}
+.buy .arw{color:var(--mute);font-size:12px}
+.cvf{display:flex;gap:10px;align-items:center}
+.cvf .cover{width:64px;height:90px;border-radius:6px}
+.cvf .cover span{font-size:12px}
+.pr select{padding:8px}
+.tpick{display:flex;flex-wrap:wrap;gap:6px}
+.tpick button{min-width:48px;min-height:44px;padding:4px 12px;border-radius:10px;border:2px solid transparent;font:400 18px "Dela Gothic One",sans-serif;color:#151412}
+.tpick button.none{background:var(--soft);color:var(--ink);font:700 14px "Zen Kaku Gothic New",sans-serif}
+.tpick button.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg) inset}
+.tpick.big button{min-width:64px;min-height:56px;font-size:24px;flex:1 1 64px}
+.tpick.big button.none{flex-basis:100%;min-height:48px;font-size:15px}
+.tbadge{display:inline-block;min-width:26px;text-align:center;font:400 13px/1.7 "Dela Gothic One",sans-serif;padding:0 6px;border-radius:6px;color:#151412;margin-left:6px;vertical-align:2px}
+.uh{font:400 18px "Dela Gothic One",sans-serif;margin:22px 0 0;display:flex;align-items:center;gap:8px}
+.uh small{font:400 13px "Zen Kaku Gothic New",sans-serif;color:var(--mute)}
+.ulist.pin .urow{border-color:var(--ink);border-width:2px}
+.ust{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pinb{min-height:30px;padding:2px 10px;border-radius:99px;border:1.5px solid var(--line);background:var(--card);font-size:12px;font-weight:700;color:var(--mute)}
+.pinb.on{background:var(--red);border-color:var(--red);color:#fff}
+.pickbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:16px}
+.rpanel{text-align:left}
+.rcard{display:flex;gap:16px;align-items:center;padding:14px;border:2px solid var(--ink);border-radius:16px;background:var(--card);min-height:150px}
+.rcard .cover{width:84px;height:120px;border-radius:8px;flex:none}
+.rcard h3{margin:0 0 6px;font:400 clamp(20px,5vw,26px)/1.2 "Dela Gothic One",sans-serif}
+.rcard .nx{display:flex;align-items:center;gap:6px;font-size:15px;margin-top:6px;flex-wrap:wrap}
+.rcard .nx i{width:12px;height:12px;border-radius:3px;flex:none}
+.rcard.spin{opacity:.55}
+.tsel{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 10px}
+.tsel select{flex:1 1 200px}
+h2.ttl{font:400 22px/1.2 "Dela Gothic One",sans-serif;margin:4px 0 12px}
+.tier{display:flex;border:1.5px solid var(--ink);border-bottom:0;background:var(--card)}
+.tier:first-child{border-radius:12px 12px 0 0}
+.tier:last-child{border-bottom:1.5px solid var(--ink);border-radius:0 0 12px 12px}
+.tl{flex:none;width:72px;display:flex;align-items:center;justify-content:center;font:400 26px/1 "Dela Gothic One",sans-serif;color:#151412;padding:6px;text-align:center;word-break:break-all}
+.tl small{font-size:13px}
+.tz{flex:1;display:flex;flex-wrap:wrap;gap:6px;padding:8px;min-height:64px;align-content:flex-start}
+.tz.target{background:color-mix(in srgb,var(--red) 10%,var(--card));cursor:pointer}
+.tc{display:flex;align-items:center;gap:8px;min-height:48px;max-width:200px;padding:4px 10px 4px 4px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);text-align:left;line-height:1.25}
+.tc .cover{width:30px;height:42px;padding:2px;border-radius:4px}.tc .cover span{font-size:8px}
+.tc span.tt{display:grid}.tc b{font-size:14px}.tc small{font-size:12px;color:var(--mute)}
+.tc.sel{border-color:var(--red);box-shadow:0 0 0 2px var(--red)}
+.pool{margin-top:18px}.pool h3{font-size:15px;margin:0 0 6px}
+.pool .tz{border:1.5px dashed var(--mute);border-radius:12px;background:transparent}
+.tbar{position:sticky;bottom:0;z-index:6;margin:14px calc(-1*max(5vw,16px)) 0;padding:10px max(5vw,16px);background:var(--ink);color:var(--bg);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tbar .nm{flex:1 1 100%;font-size:14px}
+.tbar button{min-height:44px;min-width:48px;padding:6px 10px;border-radius:10px;border:0;font:400 18px "Dela Gothic One",sans-serif;color:#151412}
+.tbar .op{background:transparent;border:1.5px solid color-mix(in srgb,var(--bg) 40%,transparent);color:var(--bg);font:700 14px "Zen Kaku Gothic New",sans-serif}
+.te{display:grid;grid-template-columns:minmax(0,1fr) auto 40px 40px 40px;gap:6px;align-items:center;margin-bottom:6px}
+.sw{display:flex;gap:4px}.sw button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;padding:0}.sw button.on{border-color:var(--ink)}
+@media(max-width:600px){.tl{width:56px;font-size:22px}.tc{max-width:160px}.te{grid-template-columns:minmax(0,1fr) 40px 40px 40px}.te .sw{grid-column:1/-1;grid-row:2}}
+.mprev{display:grid;gap:4px;font-size:14px;margin-bottom:4px}
+.mprev:empty{display:none}
+.mprev .sum{font-weight:700}
+.mprev div{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:4px 0;border-bottom:1px solid var(--line)}
+.mprev em{font-style:normal;font-size:12px;font-weight:700;padding:0 6px;border-radius:6px;background:var(--soft);white-space:nowrap}
+.mprev em.nw{background:var(--red);color:#fff}
+.mprev small{color:var(--mute)}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;width:max-content}
+.seg button{min-height:44px;min-width:84px;border:0;background:var(--card);font-weight:700}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.st{display:inline-block;font-size:12px;font-weight:700;line-height:1.5;padding:1px 8px;border-radius:6px;border:1.5px solid #2f8f4e;color:#2f8f4e;white-space:nowrap;vertical-align:1px}
+.st.fin{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+@media(max-width:600px){.bar{position:static}}
+.tabs{max-width:1100px;margin:0 auto 8px;display:flex;gap:6px}
+.tabs button{min-height:40px;padding:6px 16px;border:0;border-radius:99px;background:var(--soft);font-weight:700}
+.tabs button.on{background:var(--ink);color:var(--bg)}
+.tabs b{display:inline-block;min-width:1.6em;margin-left:4px;padding:0 6px;border-radius:99px;background:var(--red);color:#fff;font-size:12px}
+.shelf span.u{opacity:.3}
+.shelf span.r{opacity:.65;box-shadow:inset 0 -9px 0 rgba(255,255,255,.75)}
+.rdw{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rdw input{width:84px}.rdw span{color:var(--mute);font-size:14px}
+.pg{display:flex;align-items:center;gap:6px;font-size:14px;flex-wrap:wrap}
+.pg input{width:76px;min-height:40px;padding:6px 8px}
+.bm{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--gap);color:#151412;white-space:nowrap}
+.tag.unr{background:var(--ink);color:var(--bg)}
+.ulist{display:grid;gap:8px;margin-top:16px}
+.urow{display:flex;gap:12px;align-items:center;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px;cursor:pointer}
+.urow:hover{border-color:var(--ink)}
+.urow .cover{width:56px;height:80px;border-radius:6px;padding:4px}
+.urow .cover span{font-size:11px}
+.urow .ui{flex:1;display:grid;gap:2px}
+.urow h3{margin:0;font-size:16px;line-height:1.3}
+.urow .nx{display:flex;align-items:center;gap:6px;font-size:14px}
+.urow .nx i{width:10px;height:10px;border-radius:3px;flex:none}
+.ub{display:grid;gap:6px;flex:none}
+.ub button{min-height:40px;padding:6px 12px;border-radius:8px;border:1.5px solid var(--ink);background:var(--card);font-weight:700;font-size:14px;white-space:nowrap}
+.ub button:first-child{background:var(--ink);color:var(--bg)}
+@media(max-width:600px){.urow{flex-wrap:wrap}.ub{grid-template-columns:1fr 1fr;width:100%}}
+.dup{display:none;background:color-mix(in srgb,var(--red) 12%,var(--card));border:1.5px solid var(--red);border-radius:10px;padding:8px 12px;font-size:14px}
+.dup.on{display:block}
+.dup button{margin-top:6px;min-height:40px;padding:6px 12px;border-radius:8px;border:1.5px solid var(--red);background:var(--card);color:var(--red);font-weight:700}
+#iTitle.ng{border-color:var(--red)}
+.cands{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px}
+.cands:empty{display:none}
+.cands button{flex:none;width:60px;height:86px;padding:0;border:2px solid var(--line);border-radius:6px;overflow:hidden;background:var(--soft)}
+.cands button.on{border-color:var(--red);box-shadow:0 0 0 2px var(--red)}
+.cands img{width:100%;height:100%;object-fit:cover;display:block}
+.cb{flex:1;padding:12px 12px 12px 14px;display:grid;gap:6px}
+.top{display:flex;gap:8px;align-items:start}
+.top h3{flex:1;margin:0;font-size:17px;line-height:1.3}
+.top h3 small{display:block;font-size:12px;font-weight:400;color:var(--mute)}
+.plus{flex:none;min-height:36px;min-width:52px;border-radius:8px;border:1.5px solid var(--ink);background:var(--card);font-weight:700;font-size:14px}
+.stars{color:var(--red);letter-spacing:1px;font-size:14px}.stars i{color:var(--line);font-style:normal}
+.meta{font-size:13px;color:var(--mute)}
+.shelf{display:flex;flex-wrap:wrap;gap:2px;padding:6px 0 4px;border-bottom:3px solid var(--ink)}
+.shelf span{width:7px;height:26px;border-radius:2px 2px 0 0;background:var(--own)}
+.shelf span.g{background:transparent;border:2px solid var(--red);border-bottom:0}
+.shelf span.n{background:transparent;border:1.5px dashed var(--mute);border-bottom:0}
+.shelf.big{display:block;position:relative;height:14px;padding:0;border:0;background:var(--soft);border-radius:7px;overflow:hidden}
+.shelf.big i{position:absolute;top:0;height:100%}
+.line{font-size:14px}.line b{font-size:16px}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;margin-left:4px;white-space:nowrap}
+.tag.new{background:var(--red);color:#fff}.tag.gap{background:var(--gap);color:#151412}.tag.done{background:var(--soft)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--soft);white-space:nowrap}
+.empty{text-align:center;padding:60px 16px;color:var(--mute)}
+.empty b{display:block;font:400 22px "Dela Gothic One",sans-serif;color:var(--ink);margin-bottom:8px}
+.ov{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);display:none;align-items:end;justify-content:center}
+.ov.on{display:flex}
+.panel{background:var(--bg);width:min(560px,100%);max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:20px 18px 24px}
+@media(min-width:640px){.ov{align-items:center}.panel{border-radius:18px}}
+.panel h2{font:400 22px "Dela Gothic One",sans-serif;margin:0 0 14px}
+.f{display:grid;gap:4px;margin-bottom:12px}
+.f label,.lbl{font-size:13px;font-weight:700;color:var(--mute)}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.rate{display:flex;gap:2px}
+.rate button{width:44px;height:44px;border:0;background:none;font-size:26px;color:var(--line)}
+.rate button.on{color:var(--red)}
+.pr{display:grid;grid-template-columns:minmax(0,1fr) 64px 16px 64px 44px;gap:6px;align-items:center;margin-bottom:6px}
+.pr input{padding:8px}.pr span{text-align:center;color:var(--mute)}
+.x{min-height:44px;border:0;background:var(--soft);border-radius:10px;font-size:18px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.acts .sp{flex:1}
+.hint{font-size:13px;color:var(--mute);margin:4px 0 0}
+textarea{width:100%;min-height:160px;font-family:ui-monospace,monospace;font-size:13px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,120px);z-index:30;background:var(--ink);color:var(--bg);padding:10px 12px 10px 16px;border-radius:12px;display:flex;gap:12px;align-items:center;transition:transform .25s;max-width:92vw}
+.toast.on{transform:translate(-50%,0)}
+body.hasbar .toast{bottom:170px}
+.toast button{background:none;border:0;color:var(--red);font-weight:700;min-height:36px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(max-width:600px){.stats{gap:16px}.pr{grid-template-columns:minmax(0,1fr) 54px 12px 54px 44px}}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <h1>本棚<span>メモ</span></h1>
+  <div class="stats" id="stats"></div>
+</div></header>
+
+<div class="bar">
+  <div class="tabs" id="tabs"><button data-v="shelf" class="on">本棚</button><button data-v="unread">未読リスト<b id="unN">0</b></button><button data-v="tier">ティア表</button></div>
+  <div class="bwrap">
+    <input type="search" id="q" placeholder="タイトル・作者・アプリで検索" aria-label="検索">
+    <select id="fApp" aria-label="アプリで絞り込み"></select>
+    <select id="fFlag" aria-label="状態で絞り込み">
+      <option value="">すべて</option><option value="new">新刊未購入</option><option value="gap">抜けあり</option><option value="unread">未読あり</option><option value="ongoing">連載中</option><option value="done">完結</option>
+    </select>
+    <select id="sort" aria-label="並び順">
+      <option value="kana">あいうえお順</option><option value="rate">評価が高い順</option><option value="upd">更新が新しい順</option>
+    </select>
+    <button class="btn pri" id="add">＋ 追加</button>
+    <button class="btn ghost" id="bulk">まとめて登録</button>
+    <button class="btn ghost" id="bk">バックアップ</button>
+  </div>
+  <div class="idx" id="idx"></div>
+</div>
+
+<main id="list"></main>
+
+<div class="ov" id="ov"><form class="panel" id="form" autocomplete="off">
+  <h2 id="fT">作品を追加</h2>
+  <div class="f"><label for="iTitle">タイトル</label><input id="iTitle" required aria-describedby="dup">
+    <div class="dup" id="dup" role="alert"></div></div>
+  <div class="f"><label for="iYomi">よみがな（あいうえお順に使います）</label><input id="iYomi" placeholder="ひらがな・カタカナで"></div>
+  <div class="f" hidden><span class="lbl">表紙</span>
+    <div class="cvf"><div class="cover" id="cvPrev"></div>
+      <div style="display:grid;gap:6px">
+        <button type="button" class="btn" id="cvFind">1巻の表紙を自動で探す</button>
+        <button type="button" class="btn ghost" id="cvDel">表紙を外す</button>
+      </div></div>
+    <div class="cands" id="cvCands"></div>
+    <p class="hint" id="cvHint">新しく追加するときは、タイトルを入れると自動で探します。違う表紙なら候補から選び直してください。</p>
+  </div>
+  <div class="row2">
+    <div class="f"><label for="iAuthor">作者</label><input id="iAuthor" list="authorsDL"></div>
+    <div class="f"><label for="iStatus">状態</label><select id="iStatus"><option>連載中</option><option>完結</option></select></div>
+  </div>
+  <div class="row2">
+    <div class="f"><span class="lbl">評価</span><div class="rate" id="iRate"></div></div>
+    <div class="f"><label for="iLatest">既刊（最新巻）</label><input id="iLatest" type="number" min="0" inputmode="numeric" placeholder="例: 14"></div>
+  </div>
+  <div class="f"><span class="lbl">ティア</span><div class="tpick" id="iTier"></div></div>
+  <div class="f"><span class="lbl">どこまで読んだ</span>
+    <div class="rdw"><input id="iRead" type="number" min="0" inputmode="numeric" aria-label="何巻"><span>巻の</span><input id="iPage" type="number" min="0" inputmode="numeric" aria-label="何ページ" placeholder="最後"><span>ページまで</span></div>
+    <p class="hint">巻を読み終えたならページは空のまま。読みかけならページを入れると「しおり」になります。</p>
+    <button type="button" class="btn ghost" id="readAll">持ってる巻は全部読んだ</button>
+  </div>
+  <div class="f"><span class="lbl">購入記録（アプリごと・巻の範囲）</span>
+    <div id="iPur"></div>
+    <button type="button" class="btn ghost" id="addPur">＋ 購入記録を追加</button>
+    <p class="hint">例: Kindle 1〜5巻、ジャンプ+ 6〜12巻。1冊だけなら同じ数字を入れます。</p>
+  </div>
+  <div class="f"><label for="iMemo">メモ</label><input id="iMemo" placeholder="次は紙で買う、など"></div>
+  <div class="acts">
+    <button type="button" class="btn ghost" id="del">削除</button><span class="sp"></span>
+    <button type="button" class="btn ghost" id="cancel">閉じる</button>
+    <button type="submit" class="btn pri">保存</button>
+  </div>
+</form></div>
+
+<div class="ov" id="ovM"><div class="panel">
+  <h2>まとめて登録</h2>
+  <div class="f"><label for="mApp">どのアプリで買った？</label><select id="mApp"></select></div>
+  <div class="f"><span class="lbl">もう読んだ？</span>
+    <div class="seg" id="mRead"><button type="button" data-rd="read">既読</button><button type="button" data-rd="unread" class="on">未読</button></div>
+    <p class="hint">貼り付けた作品にまとめて付きます。行の中に「既読」「未読」と書けば、その行だけ変えられます。</p></div>
+  <div class="f"><label for="mTxt">1行に1作品ずつ貼り付け</label>
+    <textarea id="mTxt" style="font-family:inherit;font-size:16px" placeholder="CRAYMORE 全27巻
+鬼滅の刃 全23巻中20巻
+賭けから始まるサヨナラの恋 既刊5巻中3巻
+葬送のフリーレン 1-5 既読"></textarea>
+    <p class="hint">「全27巻」→ 完結・27巻全部持っている。「全27巻中26巻」→ 完結・1〜26巻を持っている。「既刊5巻中3巻」→ 連載中・1〜3巻を持っている。「1-5」のように巻だけ書いてもOK。完結・既刊は書かなければ後から設定できます。登録済みの作品には巻だけ書き足します。</p></div>
+  <div id="mPrev" class="mprev"></div>
+  <div class="acts"><span class="sp"></span>
+    <button class="btn ghost" id="mClose">閉じる</button>
+    <button class="btn pri" id="mGo" disabled>登録する</button></div>
+</div></div>
+
+<div class="ov" id="ovB"><div class="panel">
+  <h2>バックアップ</h2>
+  <p class="hint">データはこのブラウザに保存されます。機種変更や別の端末で使うときは、ここで書き出して読み込んでください。</p>
+  <textarea id="bTxt" aria-label="データ"></textarea>
+  <div class="acts" hidden><button class="btn" id="bAuto">表紙のない作品の表紙をまとめて取得</button></div>
+  <div class="acts">
+    <button class="btn ghost" id="bCopy">コピー</button>
+    <button class="btn ghost" id="bDl">ファイルに保存</button>
+    <label class="btn ghost" style="display:inline-flex;align-items:center">ファイルを開く<input type="file" id="bFile" accept=".json,application/json" hidden></label>
+    <span class="sp"></span>
+    <button class="btn ghost" id="bClose">閉じる</button>
+    <button class="btn pri" id="bLoad">貼り付けた内容で上書き</button>
+  </div>
+</div></div>
+
+<datalist id="apps"></datalist><datalist id="authorsDL"></datalist>
+<div class="ov" id="ovR"><div class="panel rpanel">
+  <p class="hint" style="margin:0 0 6px">今日読むのは…</p>
+  <div class="rcard" id="rCard"></div>
+  <div class="acts">
+    <button type="button" class="btn ghost" id="rClose">やめる</button><span class="sp"></span>
+    <button type="button" class="btn" id="rAgain">もう一回</button>
+    <button type="button" class="btn pri" id="rOk">これにする</button>
+  </div>
+</div></div>
+<div class="ov" id="ovQ"><div class="panel">
+  <h2 id="qT"></h2>
+  <p class="hint" id="qS" style="margin:-6px 0 12px"></p>
+  <div class="tpick big" id="qPick"></div>
+  <div class="acts"><span class="sp"></span><button type="button" class="btn ghost" id="qLater">あとで</button></div>
+</div></div>
+<div class="ov" id="ovT"><div class="panel">
+  <h2>ティアを編集</h2>
+  <div id="teList"></div>
+  <button type="button" class="btn ghost" id="teAdd">＋ ティアを追加</button>
+  <p class="hint">ティアを削除すると、そこにあった作品は「未分類」に戻ります。</p>
+  <div class="acts"><span class="sp"></span><button type="button" class="btn ghost" id="teClose">閉じる</button><button type="button" class="btn pri" id="teSave">保存</button></div>
+</div></div>
+<div class="toast" id="toast"><span id="tMsg"></span><button id="tUndo">元に戻す</button></div>
+
+<script>
+{
+const K='shelf-memo-v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const APPS=['DLsite','FANZA','DMMブックス','コミックシーモア','BookLive!','Kindle','Komiflo','ebookjapan','楽天Kobo','紙の本'];
+const COLS=[[/fanza/i,'#e8383d'],[/komiflo/i,'#2bb3c0'],[/ピッコマ|piccoma/i,'#f0a500'],[/kindle|キンドル/i,'#2f6fd6'],[/walker|ウォーカー/i,'#00a0e9'],[/dmm/i,'#5b5b66'],[/dlsite/i,'#1d3d8f'],[/ameba|アメーバ/i,'#8bc34a'],[/u-?next|ユーネクスト/i,'#b5179e'],
+ [/ジャンプ|jump/i,'#e2231a'],[/マガポケ/i,'#12a39a'],[/line/i,'#06c755'],[/シーモア/i,'#e8508c'],[/ebook|イーブック/i,'#8a3ffc'],[/booklive|ブックライブ/i,'#ff7a00'],[/kobo|楽天/i,'#bf0000'],[/紙/,'#8b5a2b']];
+const col=a=>{if(!a)return'#9a948a';for(const[r,c]of COLS)if(r.test(a))return c;let h=0;for(const ch of a)h=(h*37+ch.charCodeAt(0))%360;return`hsl(${h} 55% 50%)`};
+const volApp=b=>{const m=new Map();for(const p of b.purchases||[])for(let v=+p.from;v<=(+p.to||+p.from)&&v<2000;v++)m.set(v,p.app||'');return m};
+const runs=b=>{const m=volApp(b),r=[];for(const v of [...m.keys()].sort((x,y)=>x-y)){const a=m.get(v),l=r.at(-1);if(l&&l.app===a&&l.to===v-1)l.to=v;else r.push({app:a,from:v,to:v})}return r};
+const SAMPLE=[];
+let books;
+try{books=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!Array.isArray(books))books=SAMPLE;
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(books))}catch(e){setTimeout(()=>toast('保存できませんでした。ブラウザの容量を確認してください'),50)}};
+
+const coll=new Intl.Collator('ja');
+const hira=s=>s.replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+const key=b=>hira((b.yomi||b.title||'').trim()).toLowerCase();
+const ROWS=[['あ','ぁあぃいぅうぇえぉおゔ'],['か','ゕかきくけこゖ'],['さ','さしすせそ'],['た','たちっつてと'],['な','なにぬねの'],['は','はひふへほ'],['ま','まみむめも'],['や','ゃやゅゆょよ'],['ら','らりるれろ'],['わ','ゎわゐゑをん']];
+const GROUPS=[...ROWS.map(r=>r[0]),'英数','他'];
+const gyou=k=>{const c=k.normalize('NFD')[0]||'';for(const[g,s]of ROWS)if(s.includes(c))return g;return /[a-z0-9]/.test(c)?'英数':'他'};
+const owned=b=>{const s=new Set();for(const p of b.purchases||[]){const a=+p.from||0,z=+p.to||a;for(let v=Math.max(1,a);v<=z&&v<2000;v++)s.add(v)}return s};
+const info=b=>{const s=owned(b),max=s.size?Math.max(...s):0,gaps=[];for(let v=1;v<max;v++)if(!s.has(v))gaps.push(v);const nw=Math.max(0,(+b.latest||0)-max),pg=+b.page||0,rv=+b.read||0,rd=pg&&rv?rv-1:rv,un=[...s].filter(v=>v>rd).sort((x,y)=>x-y);return{s,max,gaps,nw,rd,un,pg,rv}};
+const ranges=s=>{const a=[...s].sort((x,y)=>x-y),r=[];for(const v of a){const l=r[r.length-1];if(l&&v===l[1]+1)l[1]=v;else r.push([v,v])}return r.map(([x,y])=>x===y?x:x+'–'+y).join(', ')};
+const hue=t=>{let h=0;for(const c of t)h=(h*31+c.charCodeAt(0))%360;return h};
+const stars=n=>'★'.repeat(n)+'<i>'+'★'.repeat(5-n)+'</i>';
+const allApps=()=>[...new Set([...books.flatMap(b=>(b.purchases||[]).map(p=>p.app).filter(Boolean)),...APPS])];
+
+const okCover=c=>false&&(/^https:\/\/(books\.google\.com|books\.googleusercontent\.com|ndlsearch\.ndl\.go\.jp)\/[^\s"'<>]*$/.test(c));
+const coverHTML=b=>`<div class="cover" style="--h:${hue(b.title||'')}">${okCover(b.cover)?`<img src="${esc(b.cover)}" alt="${esc(b.title)}の表紙" referrerpolicy="no-referrer" onerror="this.remove()">`:`<span>${esc((b.title||'？').slice(0,9))}</span>`}</div>`;
+const stBadge=b=>b.status==='完結'?`<span class="st fin">完結${b.latest?`・全${+b.latest}巻`:''}</span>`:`<span class="st">連載中${b.latest?`・既刊${+b.latest}巻`:''}</span>`;
+function card(b){
+  const{s,max,gaps,nw,rd,un,pg,rv}=info(b),n=Math.max(max,+b.latest||0);
+  const va=volApp(b),rs=runs(b);let shelf='';
+  if(n<=60){let h='';for(let v=1;v<=n;v++)h+=s.has(v)?`<span class="${pg&&v===rv?'r':v>rd?'u':''}" style="background:${col(va.get(v))}" title="${v}巻 ${esc(va.get(v))}${pg&&v===rv?`（${pg}ページまで）`:v>rd?'（未読）':''}"></span>`:`<span class="${v<max?'g':'n'}" title="${v}巻"></span>`;shelf=`<div class="shelf" aria-hidden="true">${h||'<span class="n"></span>'}</div>`}
+  else shelf=`<div class="shelf big" aria-hidden="true">${rs.map(r=>`<i style="left:${((r.from-1)/n*100).toFixed(2)}%;width:${((r.to-r.from+1)/n*100).toFixed(2)}%;background:${col(r.app)}"></i>`).join('')}</div>`;
+  const chips=rs.length?`<div class="buys">${rs.map((r,i)=>`<div class="buy"><i style="background:${col(r.app)}"></i><b>${r.from===r.to?r.from:r.from+'〜'+r.to}巻</b>${esc(r.app||'アプリ未設定')}</div>`).join('')}</div>`:'';
+  return `<article class="card" data-id="${esc(b.id)}" tabindex="0">
+   ${coverHTML(b)}
+   <div class="cb">
+    <div class="top"><h3>${esc(b.title)}<small>${stBadge(b)}${b.author?' '+esc(b.author):''}</small></h3>
+     <button class="plus" data-plus="${esc(b.id)}" aria-label="${esc(b.title)}の${max+1}巻を追加">+1巻</button></div>
+    <div class="stars" aria-label="評価${b.rating||0}">${stars(b.rating||0)}${tierBadge(b)}</div>
+    ${shelf}
+    <div class="line">所持 <b>${s.size}</b>冊${s.size?`（${esc(ranges(s))}巻）`:''}${b.latest?` / 既刊${+b.latest}巻`:''}
+     ${nw?`<span class="tag new">新刊${nw}冊</span>`:''}${gaps.length?`<span class="tag gap">抜け ${esc(ranges(new Set(gaps)))}巻</span>`:''}${b.status==='完結'&&!nw&&!gaps.length&&s.size?'<span class="tag done">コンプ</span>':''}</div>
+    ${s.size?`<div class="line">読んだ：${rd?`<b>${Math.min(rd,max)}</b>巻まで`:pg?'':'まだ'}${pg&&rv?` <span class="bm">${rv}巻 ${pg}ページ</span>`:''}${un.length?`<span class="tag unr">未読${un.length}冊</span>`:'<span class="tag done">全部読んだ</span>'}</div>`:''}
+    ${chips}
+    ${b.memo?`<div class="meta">${esc(b.memo)}</div>`:''}
+   </div></article>`;
+}
+
+let view='shelf',lastUnread=[];
+const isReading=b=>!!b.reading&&info(b).un.length>0;
+for(const b of books)if(b.reading===undefined&&+b.page>0)b.reading=+b.updated||Date.now();
+// ===== ランダムで1冊 =====
+let rPick=null,rTimer=null;
+function rCardHTML(b){const{un,pg,rv}=info(b),nx=un[0],app=volApp(b).get(nx)||'';
+  return `${coverHTML(b)}<div><h3>${esc(b.title)}</h3>${stBadge(b)}
+   <div class="nx">${pg&&rv===nx?`<span class="bm">続きから ${nx}巻 ${pg}ページ</span>`:`<b>${nx}巻</b>から`}<i style="background:${col(app)}"></i>${esc(app||'アプリ未設定')}</div>
+   <div class="meta" style="margin-top:4px">未読 ${un.length}冊${b.author?'・'+esc(b.author):''}</div></div>`}
+function pickRandom(){
+  const all=lastUnread.filter(b=>info(b).un.length),fresh=all.filter(b=>!isReading(b)),pool=fresh.length?fresh:all;if(!pool.length){toast('未読の作品がありません');return}
+  $('#toast').classList.remove('on');$('#ovR').classList.add('on');clearInterval(rTimer);
+  const choose=()=>{let c;do{c=pool[Math.floor(Math.random()*pool.length)]}while(pool.length>1&&c===rPick);return c};
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce||pool.length<2){rPick=choose();$('#rCard').innerHTML=rCardHTML(rPick);return}
+  let n=0;$('#rCard').classList.add('spin');
+  rTimer=setInterval(()=>{rPick=choose();$('#rCard').innerHTML=rCardHTML(rPick);if(++n>=10){clearInterval(rTimer);$('#rCard').classList.remove('spin')}},70);
+}
+$('#rAgain').onclick=pickRandom;
+$('#rClose').onclick=()=>{clearInterval(rTimer);$('#ovR').classList.remove('on')};
+$('#ovR').onclick=e=>{if(e.target.id==='ovR'){clearInterval(rTimer);$('#ovR').classList.remove('on')}};
+$('#rOk').onclick=()=>{clearInterval(rTimer);$('#rCard').classList.remove('spin');$('#ovR').classList.remove('on');if(!rPick)return;
+  rPick.reading=Date.now();save();render();
+  const el=document.querySelector(`.urow[data-id="${CSS.escape(rPick.id)}"]`);
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.borderColor='var(--red)';el.style.boxShadow='0 0 0 3px var(--red)';setTimeout(()=>{el.style.borderColor='';el.style.boxShadow=''},2500)}
+  toast(`今日は「${rPick.title}」を読もう`)};
+// ===== ティア表 =====
+const TPAL=['#ff6b6b','#ffa94d','#ffd43b','#8ce99a','#74c0fc','#b197fc','#f783ac','#ced4da'];
+const DEF_T=[['S',0],['A',1],['B',2],['C',3],['D',4]].map(([l,i])=>({id:l,label:l,color:TPAL[i]}));
+let tiers;try{tiers=JSON.parse(localStorage.getItem(K+'-tiers'))}catch(e){}
+if(!Array.isArray(tiers)||!tiers.length)tiers=DEF_T;
+const saveTiers=()=>{try{localStorage.setItem(K+'-tiers',JSON.stringify(tiers))}catch(e){}};
+const NOA='作者未登録';
+const authorOf=b=>(b.author||'').trim()||NOA;
+const authorList=()=>{const m=new Map();for(const b of books){const a=(b.author||'').trim();if(a&&!m.has(norm(a)))m.set(norm(a),a)}return[...m.values()].sort((x,y)=>coll.compare(x,y))};
+let tFilter='',tSel=null;
+const tierBadge=b=>{const t=tiers.find(x=>x.id===b.tier);return t?`<span class="tbadge" style="background:${esc(t.color)}" title="ティア">${esc(t.label.slice(0,3))}</span>`:''};
+const pickHTML=cur=>tiers.map(t=>`<button type="button" data-pt="${esc(t.id)}" class="${cur===t.id?'on':''}" style="background:${esc(t.color)}">${esc(t.label.slice(0,4))}</button>`).join('')+`<button type="button" data-pt="" class="none${tiers.some(t=>t.id===cur)?'':' on'}">未分類</button>`;
+let qId=null;
+function askTier(b,finished){
+  qId=b.id;const t=tiers.find(x=>x.id===b.tier);
+  $('#qT').textContent=finished?`「${b.title}」読み終わり！`:`「${b.title}」を読んだ！`;
+  $('#qS').textContent=t?`今は ${t.label}。ランクを変えるなら選んでください`:'ティア表のどこに入れますか？';
+  $('#qPick').innerHTML=pickHTML(b.tier);$('#toast').classList.remove('on');$('#ovQ').classList.add('on');
+}
+$('#qPick').onclick=e=>{const p=e.target.closest('[data-pt]');if(!p)return;const b=books.find(x=>x.id===qId);$('#ovQ').classList.remove('on');if(!b)return;
+  const t=tiers.find(x=>x.id===p.dataset.pt);if(b.tier!==p.dataset.pt){b.tier=p.dataset.pt;b.tierOrder=Math.max(0,...books.map(x=>x.tierOrder||0))+1;save();render()}
+  toast(t?`「${b.title}」を ${t.label} に入れました`:`「${b.title}」は未分類のままです`)};
+$('#qLater').onclick=()=>$('#ovQ').classList.remove('on');
+$('#ovQ').onclick=e=>{if(e.target.id==='ovQ')$('#ovQ').classList.remove('on')};
+function tchip(b){return `<button class="tc${tSel===b.id?' sel':''}" data-tw="${esc(b.id)}">${coverHTML(b)}<span class="tt"><b>${esc(b.title)}</b>${tFilter?'':`<small>${esc(authorOf(b))}</small>`}</span></button>`}
+function renderTier(list){
+  const aus=authorList(),hasNo=books.some(b=>!(b.author||'').trim());
+  if(tFilter&&tFilter!==NOA&&!aus.some(a=>norm(a)===norm(tFilter)))tFilter='';
+  const ws=list.filter(b=>!tFilter||norm(authorOf(b))===norm(tFilter)).sort((a,b)=>(a.tierOrder||0)-(b.tierOrder||0));
+  const valid=new Set(tiers.map(t=>t.id)),pool=ws.filter(b=>!valid.has(b.tier));
+  const opt=a=>`<option value="${esc(a)}"${norm(a)===norm(tFilter)?' selected':''}>${esc(a)}（${books.filter(b=>norm(authorOf(b))===norm(a)).length}）</option>`;
+  $('#list').innerHTML=`<div class="tsel"><span class="lbl">表示する作品</span><select id="tAuthor" aria-label="作家で絞り込み"><option value="">すべての作品</option>${aus.map(opt).join('')}${hasNo?opt(NOA):''}</select></div>
+   <h2 class="ttl">${tFilter?esc(tFilter)+'の作品ティア表':'全作品ティア表'}</h2>
+   <div>${tiers.map(t=>`<div class="tier"><div class="tl" style="background:${esc(t.color)}">${t.label.length>3?`<small>${esc(t.label)}</small>`:esc(t.label)}</div><div class="tz${tSel?' target':''}" data-tz="${esc(t.id)}">${ws.filter(b=>b.tier===t.id).map(tchip).join('')}</div></div>`).join('')}</div>
+   <div class="pool"><h3>未分類 <small style="color:var(--mute);font-weight:400">${pool.length?pool.length+'作品':''}</small></h3><div class="tz${tSel?' target':''}" data-tz="">${pool.length?pool.map(tchip).join(''):'<span class="hint">ここに未分類の作品が入ります</span>'}</div></div>
+   <div class="acts"><button class="btn ghost" id="tCopy">テキストでコピー</button><button class="btn ghost" id="tEdit">ティアを編集</button></div>
+   <p class="hint">作品をタップして選び、下のランクボタンか、置きたい段をタップすると移動します。並べるのは作品です。上の切り替えで作家を選ぶと、その作家の作品だけのティア表になります（作者は各作品の編集画面で入力）。</p>
+   ${tBar()}`;
+}
+function tBar(){const b=books.find(x=>x.id===tSel);document.body.classList.toggle('hasbar',!!b);if(!b)return'';
+  return `<div class="tbar"><div class="nm"><b>${esc(b.title)}</b>　をどこへ？</div>${tiers.map(t=>`<button data-to="${esc(t.id)}" style="background:${esc(t.color)}">${esc(t.label.slice(0,3))}</button>`).join('')}<button class="op" data-to="">未分類</button><button class="op" data-mv="-1" aria-label="左へ">←</button><button class="op" data-mv="1" aria-label="右へ">→</button><button class="op" data-tx>×</button></div>`}
+function tMove(id,tier){const b=books.find(x=>x.id===id);if(!b)return;b.tier=tier;b.tierOrder=Math.max(0,...books.map(x=>x.tierOrder||0))+1;save();render()}
+function tNudge(d){const b=books.find(x=>x.id===tSel);if(!b)return;const valid=new Set(tiers.map(t=>t.id)),same=x=>valid.has(b.tier)?x.tier===b.tier:!valid.has(x.tier);
+  const row=books.filter(x=>same(x)&&(!tFilter||norm(authorOf(x))===norm(tFilter))).sort((a,c)=>(a.tierOrder||0)-(c.tierOrder||0));
+  const i=row.indexOf(b),j=i+d;if(j<0||j>=row.length)return;const o=row[j].tierOrder||0;row[j].tierOrder=b.tierOrder||0;b.tierOrder=o;save();render()}
+function tierClick(e){
+  if(view!=='tier')return false;
+  const c=e.target.closest('[data-tw]');if(c){tSel=tSel===c.dataset.tw?null:c.dataset.tw;render();return true}
+  const bt=e.target.closest('.tbar button');if(bt){if(bt.dataset.to!==undefined)tMove(tSel,bt.dataset.to);else if(bt.dataset.mv)tNudge(+bt.dataset.mv);else{tSel=null;render()}return true}
+  if(e.target.id==='tCopy'){tCopy();return true}
+  if(e.target.id==='tEdit'){tmpT=tiers.map(t=>({...t}));drawTE();$('#ovT').classList.add('on');return true}
+  const z=e.target.closest('[data-tz]');if(z&&tSel){tMove(tSel,z.dataset.tz);return true}
+  return true;
+}
+async function tCopy(){const ws=books.filter(b=>!tFilter||norm(authorOf(b))===norm(tFilter)).sort((a,b)=>(a.tierOrder||0)-(b.tierOrder||0));
+  const txt=`【${tFilter?tFilter+'の作品ティア表':'全作品ティア表'}】\n`+tiers.map(t=>`${t.label}：${ws.filter(b=>b.tier===t.id).map(b=>tFilter?b.title:`${b.title}（${authorOf(b)}）`).join('、')||'—'}`).join('\n');
+  try{await navigator.clipboard.writeText(txt);toast('コピーしました')}catch(e){$('#bTxt').value=txt;$('#ovB').classList.add('on');toast('コピーできなかったので表示しました')}}
+let tmpT=[];
+function drawTE(){$('#teList').innerHTML=tmpT.map((t,i)=>`<div class="te" data-i="${i}"><input value="${esc(t.label)}" aria-label="ティア名" maxlength="12"><div class="sw">${TPAL.map(c=>`<button type="button" data-c="${c}" class="${c===t.color?'on':''}" style="background:${c}" aria-label="色"></button>`).join('')}</div><button type="button" class="x" data-up aria-label="上へ">↑</button><button type="button" class="x" data-dn aria-label="下へ">↓</button><button type="button" class="x" data-rm aria-label="削除">×</button></div>`).join('')}
+$('#teList').oninput=e=>{tmpT[+e.target.closest('.te').dataset.i].label=e.target.value};
+$('#teList').onclick=e=>{const r=e.target.closest('.te');if(!r)return;const i=+r.dataset.i,b=e.target;
+  if(b.dataset.c){tmpT[i].color=b.dataset.c;drawTE()}else if(b.dataset.up!==undefined&&i>0){[tmpT[i-1],tmpT[i]]=[tmpT[i],tmpT[i-1]];drawTE()}
+  else if(b.dataset.dn!==undefined&&i<tmpT.length-1){[tmpT[i+1],tmpT[i]]=[tmpT[i],tmpT[i+1]];drawTE()}else if(b.dataset.rm!==undefined){tmpT.splice(i,1);drawTE()}};
+$('#teAdd').onclick=()=>{tmpT.push({id:'t'+Date.now().toString(36),label:'新',color:TPAL[tmpT.length%TPAL.length]});drawTE()};
+$('#teSave').onclick=()=>{tiers=tmpT.filter(t=>t.label.trim()).map(t=>({...t,label:t.label.trim()}));saveTiers();$('#ovT').classList.remove('on');render();toast('ティアを保存しました')};
+$('#teClose').onclick=()=>$('#ovT').classList.remove('on');
+$('#ovT').onclick=e=>{if(e.target.id==='ovT')$('#ovT').classList.remove('on')};
+function urow(b){
+  const{un,pg,rv}=info(b),va=volApp(b),nx=un[0],app=va.get(nx)||'';
+  return `<article class="urow" data-id="${esc(b.id)}" tabindex="0">${coverHTML(b)}
+   <div class="ui"><h3>${esc(b.title)}</h3><div class="ust">${stBadge(b)}<button class="pinb${isReading(b)?' on':''}" data-pin="${esc(b.id)}" aria-pressed="${isReading(b)}">${isReading(b)?'読んでいる ✓':'今読んでる'}</button></div>
+    <div class="line">未読 <b>${un.length}</b>冊（${esc(ranges(new Set(un)))}巻）</div>
+    <div class="nx">${pg&&rv===nx?`<span class="bm">読みかけ ${nx}巻 ${pg}ページ</span>`:`次は <b>${nx}巻</b>`}<i style="background:${col(app)}"></i>${esc(app||'アプリ未設定')}</div>
+    <label class="pg">${nx}巻の<input type="number" min="0" inputmode="numeric" data-pg="${esc(b.id)}" value="${pg&&rv===nx?pg:''}" placeholder="—">ページまで</label></div>
+   <div class="ub"><button data-r1="${esc(b.id)}">${nx}巻を読んだ</button><button data-ra="${esc(b.id)}">全部読んだ</button></div></article>`;
+}
+function markRead(id,all){
+  const b=books.find(x=>x.id===id);if(!b)return;const prev=before(),{un,max}=info(b);if(!un.length)return;
+  b.read=all?max:un[0];b.page='';b.updated=Date.now();
+  if(all||un.length<=1)delete b.reading;else b.reading=Date.now();
+  commit(prev,all?`「${b.title}」を全部読んだ`:`「${b.title}」${un[0]}巻を読んだ`);
+  const fin=!info(b).un.length,ranked=tiers.some(t=>t.id===b.tier);
+  if(fin||!ranked)setTimeout(()=>askTier(b,fin),250);
+}
+$('#tabs').onclick=e=>{const t=e.target.closest('[data-v]');if(!t)return;view=t.dataset.v;tSel=null;for(const x of $('#tabs').children)x.classList.toggle('on',x===t);render();window.scrollTo(0,0)};
+function render(){
+  const q=$('#q').value.trim().toLowerCase(),fa=$('#fApp').value,ff=$('#fFlag').value,so=$('#sort').value;
+  const apps=allApps(),cur=fa;
+  $('#fApp').innerHTML='<option value="">全アプリ</option>'+apps.filter(a=>books.some(b=>(b.purchases||[]).some(p=>p.app===a))).map(a=>`<option${a===cur?' selected':''}>${esc(a)}</option>`).join('');
+  $('#apps').innerHTML=apps.map(a=>`<option value="${esc(a)}">`).join('');
+  $('#authorsDL').innerHTML=authorList().map(a=>`<option value="${esc(a)}">`).join('');
+  let vol=0,newT=0,unV=0,unT=0;for(const b of books){const i=info(b);vol+=i.s.size;if(i.nw)newT++;unV+=i.un.length;if(i.un.length)unT++}
+  $('#unN').textContent=unT;
+  $('#stats').innerHTML=`<div class="stat"><b>${books.length}</b><small>作品</small></div><div class="stat"><b>${vol}</b><small>所持冊数</small></div><div class="stat"><b>${unV}</b><small>未読冊数</small></div><div class="stat${newT?' alert':''}"><b>${newT}</b><small>新刊未購入</small></div>`;
+  let list=books.filter(b=>{
+    if(q&&![b.title,b.yomi,b.author,b.memo,...(b.purchases||[]).map(p=>p.app)].join(' ').toLowerCase().includes(q))return false;
+    if(fa&&!(b.purchases||[]).some(p=>p.app===fa))return false;
+    const i=info(b);
+    if(ff==='new'&&!i.nw)return false;if((ff==='unread'||view==='unread')&&!i.un.length)return false;if(ff==='gap'&&!i.gaps.length)return false;
+    if(ff==='ongoing'&&b.status==='完結')return false;if(ff==='done'&&b.status!=='完結')return false;
+    return true});
+  const byKana=(a,b)=>coll.compare(key(a),key(b));
+  list.sort(so==='rate'?(a,b)=>(b.rating||0)-(a.rating||0)||byKana(a,b):so==='upd'?(a,b)=>(b.updated||0)-(a.updated||0):byKana);
+  document.body.classList.remove('hasbar');
+  if(view==='tier'){$('#idx').style.display='none';renderTier(list);return}
+  if(view==='unread'){
+    $('#idx').style.display='none';
+    if(!list.length){$('#list').innerHTML='<div class="empty"><b>未読の作品はありません</b>カードを開いて「何巻まで読んだ」を入れると、ここに未読の巻が並びます</div>';return}
+    $('#list').innerHTML=`<div class="pickbar"><button class="btn pri" id="rnd">ランダムで読むものを決める</button><span class="hint">${(list.filter(b=>!isReading(b)).length||list.length)}作品から選びます${$('#q').value||$('#fApp').value||$('#fFlag').value?'（絞り込み中）':''}</span></div>${(()=>{const rd=list.filter(isReading).sort((a,b)=>b.reading-a.reading),rest=list.filter(b=>!isReading(b));
+      return (rd.length?`<h3 class="uh">今読んでいる <small>${rd.length}作品</small></h3><div class="ulist pin">${rd.map(urow).join('')}</div>`:'')+
+       (rest.length?`<h3 class="uh">未読 <small>${rest.length}作品</small></h3><div class="ulist">${rest.map(urow).join('')}</div>`:'')})()}`;lastUnread=list;return}
+  const present=new Set(list.map(b=>gyou(key(b))));
+  $('#idx').style.display=so==='kana'&&list.length?'flex':'none';
+  $('#idx').innerHTML=GROUPS.map(g=>`<button data-g="${g}"${present.has(g)?'':' disabled'}>${g}</button>`).join('');
+  if(!books.length){$('#list').innerHTML='<div class="empty"><b>本棚はまだ空です</b>「＋ 追加」から持っている漫画を登録しましょう</div>';return}
+  if(!list.length){$('#list').innerHTML='<div class="empty"><b>見つかりません</b>検索語や絞り込みを変えてみてください</div>';return}
+  const smp=books.some(b=>String(b.id).startsWith('s'))?'<p class="hint">サンプルデータが入っています。各カードを開いて削除できます。</p>':'';
+  if(so!=='kana'){$('#list').innerHTML=smp+`<div class="sec"><div class="grid" style="margin-top:16px">${list.map(card).join('')}</div></div>`;return}
+  $('#list').innerHTML=smp+GROUPS.filter(g=>present.has(g)).map(g=>`<section class="sec"><h2 id="g-${g}">${g}</h2><div class="grid">${list.filter(b=>gyou(key(b))===g).map(card).join('')}</div></section>`).join('');
+}
+
+// toast + undo
+let snap=null,tt;
+function toast(msg,undo){snap=undo?JSON.stringify(books):null;$('#tMsg').textContent=msg;$('#tUndo').style.display=undo?'':'none';$('#toast').classList.add('on');clearTimeout(tt);tt=setTimeout(()=>$('#toast').classList.remove('on'),5000)}
+$('#tUndo').onclick=()=>{if(snap){books=JSON.parse(snap);snap=null;save();render()}$('#toast').classList.remove('on')};
+const before=()=>JSON.stringify(books);
+function commit(prev,msg){save();render();snap=prev;$('#tMsg').textContent=msg;$('#tUndo').style.display='';$('#toast').classList.add('on');clearTimeout(tt);tt=setTimeout(()=>$('#toast').classList.remove('on'),5000)}
+
+// +1巻
+function plusOne(id){
+  const b=books.find(x=>x.id===id);if(!b)return;const prev=before();
+  const{max}=info(b),next=max+1;b.purchases=b.purchases||[];
+  const p=b.purchases.find(p=>+p.to===max&&max>0);
+  if(p)p.to=next;else b.purchases.push({app:b.purchases.at(-1)?.app||'',from:next,to:next});
+  if((+b.latest||0)<next)b.latest=next;b.updated=Date.now();
+  commit(prev,`${b.title} ${next}巻を追加`);
+}
+
+// editor
+let edTier='',editing=null,tmp=[],rate=0,delArmed=false;
+function drawRate(){$('#iRate').innerHTML=[1,2,3,4,5].map(n=>`<button type="button" data-r="${n}" class="${n<=rate?'on':''}" aria-label="${n}点">★</button>`).join('')}
+function appField(p){
+  const list=allApps();
+  if(p._c||(p.app&&!list.includes(p.app)))return `<input list="apps" data-k="app" value="${esc(p.app)}" placeholder="アプリ名を入力" aria-label="アプリ">`;
+  return `<select data-k="app" aria-label="アプリ" style="border-left:6px solid ${col(p.app)}"><option value="">アプリを選ぶ</option>${list.map(a=>`<option${a===p.app?' selected':''}>${esc(a)}</option>`).join('')}<option value="__c">その他（入力）</option></select>`;
+}
+function drawPur(){$('#iPur').innerHTML=tmp.map((p,i)=>`<div class="pr" data-i="${i}">
+  ${appField(p)}
+  <input type="number" min="1" inputmode="numeric" data-k="from" value="${esc(p.from)}" aria-label="何巻から"><span>〜</span>
+  <input type="number" min="1" inputmode="numeric" data-k="to" value="${esc(p.to)}" aria-label="何巻まで">
+  <button type="button" class="x" data-x="${i}" aria-label="この記録を削除">×</button></div>`).join('')}
+function openEd(id){
+  editing=id?books.find(b=>b.id===id):null;const b=editing||{};
+  $('#fT').textContent=editing?'作品を編集':'作品を追加';
+  $('#iTitle').value=b.title||'';$('#iYomi').value=b.yomi||'';$('#iAuthor').value=b.author||'';
+  $('#iStatus').value=b.status||'連載中';$('#iLatest').value=b.latest||'';$('#iRead').value=b.read||'';$('#iPage').value=b.page||'';$('#iMemo').value=b.memo||'';
+  edTier=b.tier||'';$('#iTier').innerHTML=pickHTML(edTier);
+  rate=b.rating||0;tmp=(b.purchases||[]).map(p=>({...p}));if(!tmp.length)tmp=[{app:'',from:1,to:''}];
+  cover=okCover(b.cover)?b.cover:'';drawCover();drawCands([]);seq++;
+  $('#cvHint').textContent=blocked()?NOTE:'新しく追加するときは、タイトルを入れると自動で探します。';
+  delArmed=false;$('#del').textContent='削除';$('#del').style.display=editing?'':'none';
+  drawRate();drawPur();showDup();$('#ov').classList.add('on');setTimeout(()=>$('#iTitle').focus(),50);
+}
+const closeEd=()=>$('#ov').classList.remove('on');
+$('#iRate').onclick=e=>{const r=+e.target.dataset.r;if(r){rate=rate===r?0:r;drawRate()}};
+$('#iPur').oninput=e=>{const i=+e.target.closest('.pr').dataset.i,k=e.target.dataset.k;
+  if(k==='app'&&e.target.tagName==='SELECT'){if(e.target.value==='__c'){tmp[i].app='';tmp[i]._c=1;drawPur();$(`#iPur [data-i="${i}"] input`).focus()}else{tmp[i].app=e.target.value;e.target.style.borderLeftColor=col(e.target.value)}return}
+  tmp[i][k]=k==='app'?e.target.value:e.target.value===''?'':+e.target.value};
+let cover='';
+const drawCover=()=>{$('#cvPrev').outerHTML=coverHTML({title:$('#iTitle').value,cover}).replace('class="cover"','class="cover" id="cvPrev"')};
+// 表紙の自動取得（Googleブックス → 見つからなければ国立国会図書館の書影）。保存するのは画像のリンクだけ
+const VOL1=/(^|[^0-9０-９])[1１]([^0-9０-９]|$)|第一巻|上巻/;
+async function findCovers(title){
+  const r=await fetch('https://www.googleapis.com/books/v1/volumes?maxResults=20&printType=books&langRestrict=ja&q='+encodeURIComponent('intitle:'+title));
+  if(!r.ok)throw new Error('http');
+  const j=await r.json(),out=[],seen=new Set();
+  for(const it of j.items||[]){
+    const v=it.volumeInfo||{},name=(v.title||'')+' '+(v.subtitle||'');
+    let url=v.imageLinks?.thumbnail||v.imageLinks?.smallThumbnail||'';
+    if(url)url=url.replace(/^http:/,'https:').replace('&edge=curl','');
+    else{const isbn=(v.industryIdentifiers||[]).find(x=>x.type==='ISBN_13');if(isbn)url=`https://ndlsearch.ndl.go.jp/thumbnail/${isbn.identifier}.jpg`}
+    if(!url||!okCover(url)||seen.has(url))continue;seen.add(url);
+    out.push({url,name,score:(VOL1.test(name)?2:0)+(hira(name).includes(hira(title))?1:0)});
+  }
+  return out.sort((a,b)=>b.score-a.score).slice(0,8);
+}
+const blocked=()=>true;
+const NOTE='表紙の自動取得はGitHub Pagesで開いたときに使えます';
+function drawCands(list){$('#cvCands').innerHTML=list.map(c=>`<button type="button" data-u="${esc(c.url)}" class="${c.url===cover?'on':''}" title="${esc(c.name)}"><img src="${esc(c.url)}" alt="${esc(c.name)}" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></button>`).join('')}
+let seq=0;
+async function searchCover(auto){
+  const t=$('#iTitle').value.trim();if(!t)return;
+  if(blocked()){$('#cvHint').textContent=NOTE;return}
+  const my=++seq;$('#cvHint').textContent='表紙を探しています…';
+  try{const list=await findCovers(t);if(my!==seq)return;
+    if(!list.length){$('#cvHint').textContent='見つかりませんでした。タイトルを正式名にすると見つかることがあります';drawCands([]);return}
+    if(auto||!cover){cover=list[0].url;drawCover()}
+    drawCands(list);$('#cvHint').textContent='違う表紙なら候補から選んでください';
+  }catch(e){if(my===seq)$('#cvHint').textContent='表紙を取得できませんでした。時間をおいて試してください'}
+}
+$('#cvFind').onclick=()=>searchCover(false);
+$('#cvCands').onclick=e=>{const b=e.target.closest('[data-u]');if(!b)return;cover=b.dataset.u;drawCover();for(const x of $('#cvCands').children)x.classList.toggle('on',x===b)};
+$('#iTitle').addEventListener('change',()=>{if(!editing&&!cover&&!findDup($('#iTitle').value))searchCover(true)});
+$('#cvDel').onclick=()=>{cover='';drawCover();drawCands([])};
+$('#iPur').onclick=e=>{if(e.target.dataset.x!==undefined){tmp.splice(+e.target.dataset.x,1);drawPur()}};
+$('#addPur').onclick=()=>{const m=Math.max(0,...tmp.map(p=>+p.to||+p.from||0));tmp.push({app:tmp.at(-1)?.app||'',from:m+1,to:''});drawPur()};
+// 重複チェック：全角半角・カタカナひらがな・大文字小文字・空白や記号の違いは同じ作品とみなす
+const norm=s=>hira(String(s||'').normalize('NFKC')).toLowerCase().replace(/[\s・\-~〜!?！？.,、。:：'"「」『』（）()\[\]【】☆★♪]/g,'');
+const findDup=t=>{const n=norm(t);return n?books.find(b=>b!==editing&&norm(b.title)===n):null};
+function showDup(){const t=$('#iTitle').value,d=findDup(t);
+  $('#dup').classList.toggle('on',!!d);$('#iTitle').classList.toggle('ng',!!d);
+  $('#dup').innerHTML=d?`「${esc(d.title)}」はもう登録されています。<br><button type="button" id="dupOpen">登録済みの「${esc(d.title)}」を開く</button>`:'';
+  return d}
+$('#dup').onclick=e=>{if(e.target.id==='dupOpen'){const d=findDup($('#iTitle').value);if(d)openEd(d.id)}};
+$('#iTitle').addEventListener('input',showDup);
+$('#iTitle').oninput=e=>{const t=e.target.value;if(/^[ぁ-ヿー\s・ー]+$/.test(t)&&!editing)$('#iYomi').value=hira(t);if(!cover)drawCover()};
+$('#cancel').onclick=closeEd;
+$('#iTier').onclick=e=>{const p=e.target.closest('[data-pt]');if(!p)return;edTier=p.dataset.pt;$('#iTier').innerHTML=pickHTML(edTier)};
+$('#readAll').onclick=()=>{const m=Math.max(0,...tmp.map(p=>Math.max(+p.to||0,+p.from||0)));$('#iRead').value=m||'';$('#iPage').value=''};
+$('#ov').onclick=e=>{if(e.target.id==='ov')closeEd()};
+$('#form').onsubmit=e=>{
+  e.preventDefault();const prev=before();
+  const pur=tmp.filter(p=>+p.from>0).map(p=>({app:(p.app||'').trim(),from:+p.from,to:Math.max(+p.to||+p.from,+p.from)}));
+  const d={title:$('#iTitle').value.trim(),yomi:$('#iYomi').value.trim(),author:$('#iAuthor').value.trim(),status:$('#iStatus').value,
+    latest:+$('#iLatest').value||'',read:+$('#iRead').value||0,page:+$('#iRead').value?(+$('#iPage').value||''):'',memo:$('#iMemo').value.trim(),rating:rate,cover,purchases:pur,updated:Date.now(),tier:edTier};
+  if(!d.title)return;
+  if(showDup()){$('#iTitle').focus();return}
+  if((editing?editing.tier||'':'')!==edTier)d.tierOrder=Math.max(0,...books.map(x=>x.tierOrder||0))+1;
+  if(editing)Object.assign(editing,d);else books.push({id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...d});
+  closeEd();commit(prev,editing?'保存しました':`「${d.title}」を追加しました`);
+};
+$('#del').onclick=()=>{
+  if(!delArmed){delArmed=true;$('#del').textContent='本当に削除';return}
+  const prev=before();books=books.filter(b=>b!==editing);closeEd();commit(prev,`「${editing.title}」を削除しました`);
+};
+
+// list events
+$('#list').addEventListener('change',e=>{const id=e.target.dataset.pg;if(!id)return;
+  const b=books.find(x=>x.id===id);if(!b)return;const prev=before(),{un,rd}=info(b),nx=un[0],p=+e.target.value||0;
+  if(p>0){b.read=nx;b.page=p;b.reading=Date.now()}else{b.read=rd;b.page=''}b.updated=Date.now();
+  commit(prev,p>0?`「${b.title}」${nx}巻 ${p}ページにしおり`:'しおりを外しました')});
+$('#list').addEventListener('input',e=>{if(e.target.id==='tAuthor'){tFilter=e.target.value;tSel=null;render()}});
+$('#list').onclick=e=>{if(tierClick(e))return;if(e.target.id==='rnd'){pickRandom();return}
+  const pn=e.target.closest('[data-pin]');if(pn){const b=books.find(x=>x.id===pn.dataset.pin);if(b){if(isReading(b))delete b.reading;else b.reading=Date.now();save();render();toast(isReading(b)?`「${b.title}」を一番上に固定しました`:`「${b.title}」の固定を外しました`)}return}if(e.target.closest('.pg'))return;const r1=e.target.closest('[data-r1],[data-ra]');if(r1){markRead(r1.dataset.r1||r1.dataset.ra,!!r1.dataset.ra);return}const u=e.target.closest('.urow');if(u){openEd(u.dataset.id);return}const p=e.target.closest('[data-plus]');if(p){e.stopPropagation();plusOne(p.dataset.plus);return}const c=e.target.closest('.card');if(c)openEd(c.dataset.id)};
+$('#list').onkeydown=e=>{if(e.key==='Enter'&&(e.target.classList.contains('card')||e.target.classList.contains('urow')))openEd(e.target.dataset.id)};
+$('#idx').onclick=e=>{const g=e.target.dataset.g;if(g)document.getElementById('g-'+g)?.scrollIntoView({behavior:'smooth'})};
+['#q','#fApp','#fFlag','#sort'].forEach(s=>$(s).addEventListener('input',render));
+$('#add').onclick=()=>openEd(null);
+try{const s=localStorage.getItem(K+'-sort');if(s)$('#sort').value=s}catch(e){}
+$('#sort').addEventListener('change',()=>{try{localStorage.setItem(K+'-sort',$('#sort').value)}catch(e){}});
+
+// backup
+const json=()=>JSON.stringify({books,tiers},null,1);
+// まとめて登録
+function parseLines(txt){
+  const map=new Map();
+  for(let line of txt.split(/\r?\n/)){
+    line=line.normalize('NFKC').replace(/\s+/g,' ').trim();if(!line)continue;
+    let status='',latest=0,vols=[],full=false,rf='';
+    if(/未読/.test(line)){rf='unread';line=line.replace(/未読/g,' ')}
+    if(/既読|読了/.test(line)){rf='read';line=line.replace(/既読|読了/g,' ')}
+    if(/完結/.test(line)){status='完結';line=line.replace(/完結(済み?)?/g,' ')}
+    if(/連載中?/.test(line)){status=status||'連載中';line=line.replace(/連載中?/g,' ')}
+    line=line.replace(/(全|既刊)\s*(\d+)\s*巻?\s*中\s*(\d+)\s*巻?(?:\s*[-~〜～ー－―]\s*(\d+)\s*巻?)?/,(m,w,n,a,z)=>{
+      latest=+n;if(w==='全'&&!status)status='完結';const lo=z?+a:1,hi=z?+z:+a;for(let v=Math.min(lo,hi);v<=Math.max(lo,hi)&&v<2000;v++)vols.push(v);return' '});
+    line=line.replace(/(全|既刊)\s*(\d+)\s*巻?/,(m,w,n)=>{latest=+n;if(w==='全'){full=true;if(!status)status='完結'}return' '}).trim();
+    let m=vols.length?null:line.match(/^(.*?)[\s第]*(\d+)\s*巻?\s*[-~〜～ー－―]\s*(\d+)\s*巻?$/);
+    if(m&&m[1].trim()){const a=+m[2],z=+m[3];for(let v=Math.min(a,z);v<=Math.max(a,z)&&v<2000;v++)vols.push(v);line=m[1]}
+    else if(!vols.length&&(m=line.match(/^(.*?)\s*[(（]\s*(\d+)\s*[)）]$/))||(m=line.match(/^(.*?)\s*第?\s*(\d+)\s*巻$/))||(m=line.match(/^(.*\S)\s+(\d+)$/))){if(m[1].trim()){vols.push(+m[2]);line=m[1]}}
+    if(!vols.length&&full)for(let v=1;v<=latest&&v<2000;v++)vols.push(v);
+    const title=line.replace(/[\s:：\-・]+$/,'').trim();if(!title)continue;
+    const k=norm(title),e=map.get(k)||{title,vols:new Set(),status:'',latest:0,rf:''};if(rf)e.rf=rf;
+    vols.forEach(v=>e.vols.add(v));if(status)e.status=status;if(latest)e.latest=Math.max(e.latest,latest);map.set(k,e);
+  }
+  return [...map.values()].map(e=>{const ex=books.find(b=>norm(b.title)===norm(e.title)),own=ex?owned(ex):new Set();
+    return{...e,ex,add:[...e.vols].filter(v=>!own.has(v)).sort((a,b)=>a-b)}});
+}
+function mPreview(){
+  const list=parseLines($('#mTxt').value),nw=list.filter(e=>!e.ex).length,def=$('#mRead .on').dataset.rd;
+  $('#mGo').disabled=!list.length;
+  $('#mPrev').innerHTML=list.length?`<p class="sum">新規 ${nw}作品・登録済みに追加 ${list.length-nw}作品</p>`+list.map(e=>`<div><em class="${e.ex?'':'nw'}">${e.ex?'追加':'新規'}</em><b>${esc(e.title)}</b><small>${e.add.length?esc(ranges(new Set(e.add)))+'巻':e.ex?'追加する巻なし':'巻なし'}${e.status?'・'+e.status:''}${e.latest?'・'+(e.status==='完結'?'全':'既刊')+e.latest+'巻':''}・${(e.rf||def)==='read'?'既読':'未読'}</small></div>`).join(''):'';
+}
+$('#bulk').onclick=()=>{const cur=$('#mApp').value;$('#mApp').innerHTML=allApps().map(a=>`<option${a===cur?' selected':''}>${esc(a)}</option>`).join('');mPreview();$('#ovM').classList.add('on');setTimeout(()=>$('#mTxt').focus(),50)};
+$('#mTxt').addEventListener('input',mPreview);
+$('#mRead').onclick=e=>{const t=e.target.closest('[data-rd]');if(!t)return;for(const x of $('#mRead').children)x.classList.toggle('on',x===t);mPreview()};
+$('#mClose').onclick=()=>$('#ovM').classList.remove('on');
+$('#ovM').onclick=e=>{if(e.target.id==='ovM')$('#ovM').classList.remove('on')};
+$('#mGo').onclick=()=>{
+  const list=parseLines($('#mTxt').value);if(!list.length)return;
+  const prev=before(),app=$('#mApp').value,now=Date.now(),def=$('#mRead .on').dataset.rd;let n=0;
+  const toPur=vs=>{const r=[];for(const v of vs){const l=r.at(-1);if(l&&l.to===v-1)l.to=v;else r.push({app,from:v,to:v})}return r};
+  for(const e of list){
+    let b=e.ex;
+    if(!b){b={id:'m'+now.toString(36)+(n++)+Math.random().toString(36).slice(2,5),title:e.title,yomi:/^[\u3041-\u30ff\u30fc\s・]+$/.test(e.title)?hira(e.title):'',author:'',status:'連載中',latest:'',read:0,page:'',rating:0,memo:'',cover:'',purchases:[]};books.push(b)}
+    b.purchases=[...(b.purchases||[]),...toPur(e.add)];
+    if(e.status)b.status=e.status;const lt=e.latest||(e.status==='完結'&&e.vols.size?Math.max(...e.vols):0);if(lt)b.latest=Math.max(+b.latest||0,lt);
+    if((e.rf||def)==='read'){const o=owned(b);b.read=o.size?Math.max(...o):0;b.page=''}b.updated=now;
+  }
+  $('#ovM').classList.remove('on');$('#mTxt').value='';
+  commit(prev,`${list.length}作品を登録しました`);
+};
+$('#bk').onclick=()=>{$('#bTxt').value=json();$('#ovB').classList.add('on')};
+$('#bClose').onclick=()=>$('#ovB').classList.remove('on');
+$('#ovB').onclick=e=>{if(e.target.id==='ovB')$('#ovB').classList.remove('on')};
+$('#bCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('#bTxt').value);toast('コピーしました')}catch(e){$('#bTxt').select();toast('選択しました。長押しでコピーしてください')}};
+$('#bDl').onclick=()=>{try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([json()],{type:'application/json'}));a.download='manga-shelf-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();a.remove();toast('保存しました')}catch(e){toast('この画面では保存できません。コピーを使ってください')}};
+$('#bFile').onchange=async e=>{const f=e.target.files[0];if(f)$('#bTxt').value=await f.text();e.target.value=''};
+$('#bAuto').onclick=async()=>{
+  if(blocked()){toast(NOTE);return}
+  const todo=books.filter(b=>!okCover(b.cover));if(!todo.length){toast('すべての作品に表紙があります');return}
+  const btn=$('#bAuto');btn.disabled=true;let ok=0;
+  for(const[i,b]of todo.entries()){btn.textContent=`取得中… ${i+1}/${todo.length}`;
+    try{const l=await findCovers(b.title);if(l.length){b.cover=l[0].url;ok++}}catch(e){}
+    await new Promise(r=>setTimeout(r,400))}
+  btn.disabled=false;btn.textContent='表紙のない作品の表紙をまとめて取得';save();render();
+  toast(`${ok}作品の表紙を取得しました（違うものはカードを開いて選び直せます）`);
+};
+$('#bLoad').onclick=()=>{
+  try{let d=JSON.parse($('#bTxt').value);if(d&&Array.isArray(d.tiers)&&d.tiers.length){tiers=d.tiers.filter(t=>t&&t.id).map(t=>({id:String(t.id),label:String(t.label||'?').slice(0,12),color:TPAL.includes(t.color)?t.color:TPAL[7]}));saveTiers()}
+    if(d&&Array.isArray(d.books))d=d.books;if(!Array.isArray(d))throw 0;const prev=before();
+    books=d.filter(b=>b&&b.title).map((b,i)=>({id:String(b.id||'m'+i+Date.now()),title:String(b.title),yomi:String(b.yomi||''),author:String(b.author||''),status:b.status==='完結'?'完結':'連載中',
+      latest:+b.latest||'',read:+b.read||0,page:+b.page||'',rating:Math.min(5,Math.max(0,+b.rating||0)),memo:String(b.memo||''),cover:okCover(b.cover)?b.cover:'',updated:+b.updated||Date.now(),tier:String(b.tier||''),tierOrder:+b.tierOrder||0,reading:+b.reading||0,
+      purchases:(Array.isArray(b.purchases)?b.purchases:[]).map(p=>({app:String(p.app||''),from:+p.from||1,to:+p.to||+p.from||1}))}));
+    $('#ovB').classList.remove('on');commit(prev,`${books.length}作品を読み込みました`)}
+  catch(e){toast('読み込めませんでした。内容を確認してください')}
+};
+try{if(window.self!==window.top)$('#bDl').style.display='none'}catch(e){$('#bDl').style.display='none'}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeEd();clearInterval(rTimer);$('#ovR').classList.remove('on');$('#ovQ').classList.remove('on');$('#ovT').classList.remove('on');$('#ovM').classList.remove('on');$('#ovB').classList.remove('on')}});
+render();
+}
+</script>
+</body>
+</html>
